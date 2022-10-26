@@ -66,6 +66,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
+	recipe_system.start(5000);
 }
 
 PlayMode::~PlayMode() {
@@ -92,6 +93,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_s) {
 			down.downs += 1;
 			down.pressed = true;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+			recipe_system.recipe_queue.pop_front();
 			return true;
 		}
 	} else if (evt.type == SDL_KEYUP) {
@@ -137,6 +141,22 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void PlayMode::update(float elapsed) {
+	//access the recipe queue
+	{
+		std::unique_lock<std::mutex>q_lock(recipe_system.q_mtx);
+		int cnt = 1;
+		for (Recipe* recipe : recipe_system.recipe_queue) {
+			std::vector<std::string> ingredients = recipe->ingredients;
+			std::cerr << "Recipe " + std::to_string(cnt++) + ": ";
+			for (std::string ingred : ingredients) {
+				std::cerr << ingred + " ";
+			}
+			std::cerr << std::endl;
+		}
+
+		if (cnt >= 5) recipe_system.q_signal = true;
+	}
+	
 	//player walking:
 	{
 		//combine inputs into a move:

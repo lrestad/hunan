@@ -5,7 +5,7 @@
 #include <mutex>
 struct RecipeInfo {
 	std::string create_time;
-	//customer info?
+	//customer info? score info? time limit?
 
 	RecipeInfo();
 	RecipeInfo(RecipeInfo* recipe_info);
@@ -14,6 +14,7 @@ struct Recipe {
 	std::vector<std::string> ingredients;
 	RecipeInfo* recipe_info;
 	Recipe(std::vector<std::string>_ingredients, RecipeInfo* _recipe_info);
+	bool is_match(Recipe* _recipe); //check if the ingredients of two recipes match
 };
 
 struct RecipeQueueSystem{
@@ -26,6 +27,6 @@ struct RecipeQueueSystem{
 	bool q_signal = false; //signal the periodical recipe generation to stop
 
 	void init();
-	void start(long interval);
+	void start(long interval); //start a periodical recipe generation
 	Recipe * generate_recipe();
 };

@@ -10,6 +10,13 @@ Recipe::Recipe(
 	ingredients = std::vector<std::string>(_ingredients.begin(), _ingredients.end());
 	recipe_info = new RecipeInfo(_recipe_info);
 }
+bool Recipe::is_match(Recipe* _recipe) {
+	std::vector<std::string> ingreds = ingredients;
+	std::vector<std::string> _ingreds = _recipe -> ingredients;
+	std::sort(ingreds.begin(), ingreds.end());
+	std::sort(_ingreds.begin(), _ingreds.end());
+	return ingreds == _ingreds;
+}
 void RecipeQueueSystem::init(){}
 void RecipeQueueSystem::start(long interval){
 	std::cerr << "Recipe queue system started" << std::endl;

@@ -5,6 +5,8 @@
 
 #include <glm/glm.hpp>
 
+#include "TextRenderer.hpp"
+
 #include <vector>
 #include <deque>
 
@@ -39,4 +41,9 @@ struct PlayMode : Mode {
 	} player;
 
 	RecipeQueueSystem recipe_system;
+
+	// Text Renderer and info
+	int windowW;
+	int windowH;
+	TextRenderer textRenderer;
 };

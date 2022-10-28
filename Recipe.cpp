@@ -22,6 +22,7 @@ void RecipeQueueSystem::start(long interval){
 	std::cerr << "Recipe queue system started" << std::endl;
 	auto loop_func = [=]() {
 		while (!q_signal){
+			if (recipe_queue.size() >= max_queue_size) continue;
 			Recipe* recipe = generate_recipe();
 			{
 				std::unique_lock<std::mutex> q_lock(q_mtx);

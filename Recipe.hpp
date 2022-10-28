@@ -20,12 +20,13 @@ struct Recipe {
 struct RecipeQueueSystem{
 
 	//dummy ingredient list contains all possible ingredients.
-	std::vector<std::string>ingredient_list = {"kungbao_chicken", "mapo tofu", "lo mein"};
+	std::vector<std::string>ingredient_list = {"chicken", "rice"};
 
 	std::deque<Recipe *>recipe_queue;
 	std::mutex q_mtx;
 	bool q_signal = false; //signal the periodical recipe generation to stop
-
+	
+	int max_queue_size = 5;
 	void init();
 	void start(long interval); //start a periodical recipe generation
 	Recipe * generate_recipe();

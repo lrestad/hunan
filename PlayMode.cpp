@@ -311,10 +311,10 @@ void PlayMode::update(float elapsed) {
 	}
 
 	// debug stuff
-	if (r.pressed && player.active_recipe.ingredients.size() == 0) {
+	if (r.pressed && r.downs == 1) {
 		player.active_recipe.AddIngredient("rice");
 	}
-	if (c_button.pressed && player.active_recipe.ingredients.size() == 1) {
+	if (c_button.pressed && c_button.downs == 1) {
 		player.active_recipe.AddIngredient("chicken");
 	}
 	if (p_button.pressed) {

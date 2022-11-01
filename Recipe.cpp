@@ -4,6 +4,7 @@
 #include <chrono>
 RecipeInfo::RecipeInfo() {}
 RecipeInfo::RecipeInfo(RecipeInfo * recipe_info) {}
+Recipe::Recipe() {};
 Recipe::Recipe(
 	std::vector<std::string>_ingredients, RecipeInfo* _recipe_info)
 {
@@ -16,6 +17,9 @@ bool Recipe::is_match(Recipe* _recipe) {
 	std::sort(ingreds.begin(), ingreds.end());
 	std::sort(_ingreds.begin(), _ingreds.end());
 	return ingreds == _ingreds;
+}
+void Recipe::AddIngredient(std::string ingredient) {
+	ingredients.push_back(ingredient);
 }
 void RecipeQueueSystem::init(){}
 void RecipeQueueSystem::start(long interval){

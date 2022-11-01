@@ -44,24 +44,58 @@ Load< WalkMeshes > counter_walkmeshes(LoadTagDefault, []() -> WalkMeshes const *
 	return ret;
 });
 
+// Quaternion lookat function adapted from Dakota's game3, originally
+// taken from https://stackoverflow.com/a/49824672
+glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos, 
+		glm::vec3 const &rotateAround = glm::vec3(0.0f, 0.0f, 1.0f)) {
+	glm::vec3 dir = toPos - fromPos;
+	float dir_len = glm::length(dir);
+
+	// Make sure dir is valid
+	if (!(dir_len > 0.0001f)) {
+		return glm::quat(1, 0, 0, 0); // identity
+	}
+
+	dir /= dir_len;
+	
+	// quatLookAt requires that dir is *not* parallel to the axis to rotate around.
+	if (glm::abs(glm::dot(dir, rotateAround)) > 0.9999f) {
+		return glm::quat(1, 0, 0, 0); // identity (I don't expect this to happen tbh)
+	}
+	return glm::quatLookAt(dir, rotateAround);
+}
+
+void PlayMode::try_submit_recipe(Recipe recipe) {
+	if (recipe_system.recipe_queue.empty()) {
+		return;
+	}
+	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
+		recipe_system.recipe_queue.pop_front();
+		player.score++;
+	}
+	// always delete recipe? not sure if we want that so add warning for now
+	std::cout << "Player turned in recipe, removing from inventory." << std::endl;
+	player.active_recipe = Recipe();
+}
+
 PlayMode::PlayMode() : scene(*counter_scene) {
 	//create a player transform:
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
 
 	//create a player camera attached to a child of the player transform:
-	scene.transforms.emplace_back();
-	scene.cameras.emplace_back(&scene.transforms.back());
+	// scene.transforms.emplace_back();
+	// scene.cameras.emplace_back(&scene.transforms.back());
 	player.camera = &scene.cameras.back();
 	player.camera->fovy = glm::radians(60.0f);
 	player.camera->near = 0.01f;
 	player.camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
-	player.camera->transform->position = glm::vec3(0.0f, 0.0f, 10.0f);
+	// player.camera->transform->position = glm::vec3(0.0f, 0.0f, 10.0f);
 
 	//rotate camera facing direction (-z) to player facing direction (+y):
-	player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	// player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
@@ -101,6 +135,18 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			f.downs += 1;
 			f.pressed = true;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_r) {
+			r.downs += 1;
+			r.pressed = true;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_c) {
+			c_button.downs += 1;
+			c_button.pressed = true;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_p) {
+			p_button.downs += 1;
+			p_button.pressed = true;
+			return true;
 		} else if (evt.key.keysym.sym == SDLK_SPACE) {
 			recipe_system.recipe_queue.pop_front();
 			return true;
@@ -120,6 +166,15 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_f) {
 			f.pressed = false;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_r) {
+			r.pressed = false;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_c) {
+			c_button.pressed = false;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_p) {
+			p_button.pressed = false;
 			return true;
 		}
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
@@ -255,12 +310,26 @@ void PlayMode::update(float elapsed) {
 		std::printf("Method 1: %f, %f, %f\n", worldcoord.x, worldcoord.y, worldcoord.z);
 	}
 
+	// debug stuff
+	if (r.pressed && player.active_recipe.ingredients.size() == 0) {
+		player.active_recipe.AddIngredient("rice");
+	}
+	if (c_button.pressed && player.active_recipe.ingredients.size() == 1) {
+		player.active_recipe.AddIngredient("chicken");
+	}
+	if (p_button.pressed) {
+		try_submit_recipe(player.active_recipe);
+	}
+
 	//reset button press counters:
 	left.downs = 0;
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
 	f.downs = 0;
+	r.downs = 0;
+	c_button.downs = 0;
+	p_button.downs = 0;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
@@ -317,7 +386,9 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
+	// Print recipes
 	{
+		// recipes to complete
 		std::unique_lock<std::mutex>q_lock(recipe_system.q_mtx);
 		int cnt = 1;
 		for (Recipe* recipe : recipe_system.recipe_queue) {
@@ -330,6 +401,18 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			textRenderer.render_text(display_text, (float)0, (float)windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
 		}
 
+		// player active recipe
+		textRenderer.render_text("inventory:", windowW - 160.0f, windowH - 40.0f, 0.5f, glm::vec3(1.0f));
+		cnt = 3;
+		for (std::string ingred : player.active_recipe.ingredients) {
+			textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
+			cnt++;
+		}
+	}
+	// Draw score
+	{
+		std::string score_text = "Score: " + std::to_string(player.score);
+		textRenderer.render_text(score_text, windowW - 240.0f, 40.0f, 1.0f, glm::vec3(1.0f));
 	}
 	GL_ERRORS();
 }

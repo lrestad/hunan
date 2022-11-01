@@ -22,5 +22,9 @@ Food Models (Chicken) used from Kenney: https://kenney.nl/assets/food-kit
 
 Baseball cap by Poly by Google [CC-BY] (https://creativecommons.org/licenses/by/3.0/) via Poly Pizza (https://poly.pizza/m/aaC5GgcWEhM)
 
+Text Rendering code modified from Dakota's game4, developed with Denise Yang (denisey) and with
+verbal permission. Code originally developed based off of
+[https://learnopengl.com/In-Practice/Text-Rendering](https://learnopengl.com/In-Practice/Text-Rendering)
+
 This game was built with [NEST](NEST.md).
 

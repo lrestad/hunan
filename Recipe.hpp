@@ -13,7 +13,9 @@ struct RecipeInfo {
 struct Recipe {
 	std::vector<std::string> ingredients;
 	RecipeInfo* recipe_info;
+	Recipe();
 	Recipe(std::vector<std::string>_ingredients, RecipeInfo* _recipe_info);
+	void AddIngredient(std::string ingredient);
 	bool is_match(Recipe* _recipe); //check if the ingredients of two recipes match
 };
 

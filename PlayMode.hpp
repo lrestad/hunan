@@ -26,21 +26,34 @@ struct PlayMode : Mode {
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
-	} left, right, down, up, f;
+	} left, right, down, up, f, r, c_button, p_button;
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
 
 	//player info:
 	struct Player {
+		// Member Variables
+
 		WalkPoint at;
 		//transform is at player's feet and will be yawed by mouse left/right motion:
 		Scene::Transform *transform = nullptr;
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
+		// active ingredients the player is holding.
+		Recipe active_recipe;
+		// time remaining on player's current action.
+		float action_time_left = 0.0f;
+		// Player's score.
+		int score = 0;
+
+		// Methods
+
+		// Constants
 	} player;
 
 	RecipeQueueSystem recipe_system;
+	void try_submit_recipe(Recipe recipe);
 
 	// Text Renderer and info
 	int windowW;

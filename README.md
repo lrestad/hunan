@@ -20,5 +20,7 @@ Food Models (Chicken) used from Kenney: https://kenney.nl/assets/food-kit
 
 "Cash Register" (https://skfb.ly/ouKXG) by wasabicats is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 
+Baseball cap by Poly by Google [CC-BY] (https://creativecommons.org/licenses/by/3.0/) via Poly Pizza (https://poly.pizza/m/aaC5GgcWEhM)
+
 This game was built with [NEST](NEST.md).
 

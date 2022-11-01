@@ -29,7 +29,7 @@ struct RecipeQueueSystem{
 	std::mutex q_mtx;
 	bool q_signal = false; //signal the periodical recipe generation to stop
 	
-	int max_queue_size = 5;
+	int max_queue_size = 6;
 	void init();
 	void start(long interval); //start a periodical recipe generation
 	Recipe * generate_recipe();

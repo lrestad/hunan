@@ -13,6 +13,8 @@
 
 #include <random>
 
+bool end_game = false;
+
 GLuint counter_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > counter_meshes(LoadTagDefault, []() -> MeshBuffer const * {
 	MeshBuffer const *ret = new MeshBuffer(data_path("counter-level.pnct"));
@@ -100,7 +102,7 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
-	recipe_system.start(5000);
+	recipe_system.start(1500);
 
 	textRenderer = TextRenderer("Roboto-Regular.ttf");
 }
@@ -109,6 +111,10 @@ PlayMode::~PlayMode() {
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
+	if (end_game) {
+		return false;
+	}
+
 	windowW = window_size.x;
 	windowH = window_size.y;
 	if (evt.type == SDL_KEYDOWN) {
@@ -211,6 +217,11 @@ void PlayMode::update(float elapsed) {
 	
 	//player walking:
 	{
+		if (recipe_system.recipe_queue.size() >= 5) {
+			recipe_system.q_signal = true;
+			end_game = true;
+		}
+
 		//combine inputs into a move:
 		constexpr float PlayerSpeed = 3.0f;
 		glm::vec2 move = glm::vec2(0.0f);

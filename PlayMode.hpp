@@ -10,6 +10,7 @@
 #include <vector>
 #include <deque>
 
+#include "Recipe.hpp"
 struct PlayMode : Mode {
 	PlayMode();
 	virtual ~PlayMode();
@@ -38,6 +39,8 @@ struct PlayMode : Mode {
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
 	} player;
+
+	RecipeQueueSystem recipe_system;
 
 	// Text Renderer and info
 	int windowW;

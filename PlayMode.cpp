@@ -66,6 +66,8 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
 
+	recipe_system.start(5000);
+
 	textRenderer = TextRenderer("Roboto-Regular.ttf");
 }
 
@@ -94,6 +96,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_s) {
 			down.downs += 1;
 			down.pressed = true;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+			recipe_system.recipe_queue.pop_front();
 			return true;
 		}
 	} else if (evt.type == SDL_KEYUP) {
@@ -142,6 +147,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void PlayMode::update(float elapsed) {
+	//access the recipe queue
+
+	
 	//player walking:
 	{
 		//combine inputs into a move:
@@ -305,6 +313,19 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
 			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
-	textRenderer.render_text("test text", windowW / 2, windowH / 2, 0.5f, glm::vec3(1.0f));
+	{
+		std::unique_lock<std::mutex>q_lock(recipe_system.q_mtx);
+		int cnt = 1;
+		for (Recipe* recipe : recipe_system.recipe_queue) {
+			std::vector<std::string> ingredients = recipe->ingredients;
+			std::string display_text = "Recipe " + std::to_string(cnt++) + ": ";
+
+			for (std::string ingred : ingredients) {
+				display_text += ingred + ", ";
+			}
+			textRenderer.render_text(display_text, (float)0, (float)windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
+		}
+
+	}
 	GL_ERRORS();
 }

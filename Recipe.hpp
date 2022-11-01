@@ -20,7 +20,8 @@ struct Recipe {
 struct RecipeQueueSystem{
 
 	//dummy ingredient list contains all possible ingredients.
-	std::vector<std::string>ingredient_list = {"chicken", "rice"};
+	std::vector<std::string>possible_sides = {"rice"};
+	std::vector<std::string>possible_entrees = {"chicken"};
 
 	std::deque<Recipe *>recipe_queue;
 	std::mutex q_mtx;

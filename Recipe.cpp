@@ -38,11 +38,16 @@ void RecipeQueueSystem::start(long interval){
 }
 Recipe * RecipeQueueSystem::generate_recipe() {
 	//hardcode for now
-	int num_ingred = rand() % 4 + 2; 
+	int num_sides = rand() % 2 + 1;
+	int num_entrees = rand() % 2 + 1;
 	std::vector<std::string>ingredients;
-	for (int i = 0; i < num_ingred; ++i) {
-		int ingred_idx = rand() % ingredient_list.size();
-		ingredients.push_back(ingredient_list[ingred_idx]);
+	for (int i = 0; i < num_sides; ++i) {
+		int ingred_idx = rand() % possible_sides.size();
+		ingredients.push_back(possible_sides[ingred_idx]);
+	}
+	for (int i = 0; i < num_entrees; ++i) {
+		int ingred_idx = rand() % possible_entrees.size();
+		ingredients.push_back(possible_entrees[ingred_idx]);
 	}
 	RecipeInfo recipe_info; 
 	Recipe* recipe = new Recipe(ingredients, &recipe_info);

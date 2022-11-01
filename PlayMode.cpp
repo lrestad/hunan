@@ -109,6 +109,9 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_s) {
 			down.pressed = false;
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_f) {
+			f.pressed = false;
+			return true;
 		}
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
 		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
@@ -224,11 +227,28 @@ void PlayMode::update(float elapsed) {
 		*/
 	}
 
+	// get "click" location:
+	if (f.pressed) {
+		// get depth component of object at cursor location
+		// center of screen for now
+		GLfloat depth;
+		glReadPixels(windowW / 2, windowH / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+		// get world space coordinates of point at cursor location
+		// center of screen for now
+		glm::mat4 projection = player.camera->make_projection();
+		glm::mat4 view = player.camera->transform->make_world_to_local();
+		glm::vec4 viewport = glm::vec4(0, 0, windowW, windowH);
+		glm::vec3 wincoord = glm::vec3(windowW / 2, windowH / 2, depth);
+		glm::vec3 worldcoord = glm::unProject(wincoord, view, projection, viewport);
+		std::printf("Method 1: %f, %f, %f\n", worldcoord.x, worldcoord.y, worldcoord.z);
+	}
+
 	//reset button press counters:
 	left.downs = 0;
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+	f.downs = 0;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {

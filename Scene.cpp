@@ -73,12 +73,26 @@ glm::mat4x3 Scene::Transform::make_world_to_local() const {
 
 //-------------------------
 
+Scene::ClickableLocation::ClickableLocation(Scene::Transform *transform_, glm::vec3 min_, glm::vec3 max_,
+		bool update_z_) :
+			transform(transform_), min(min_), max(max_), update_z(update_z_) {}
+
+void Scene::ClickableLocation::on_click(Scene::Transform *to_move) {
+	std::printf("Clicked on %s\n", transform->name.c_str());
+	to_move->position.x = transform->position.x;
+	to_move->position.y = transform->position.y;
+	if (update_z)
+		to_move->position.z = transform->position.z;
+	// add rotating?
+}
+
+//-------------------------
+
 glm::mat4 Scene::Camera::make_projection() const {
 	return glm::infinitePerspective( fovy, aspect, near );
 }
 
 //-------------------------
-
 
 void Scene::draw(Camera const &camera) const {
 	assert(camera.transform);
@@ -361,6 +375,12 @@ void Scene::set(Scene const &other, std::unordered_map< Transform const *, Trans
 	drawables = other.drawables;
 	for (auto &d : drawables) {
 		d.transform = transform_to_transform.at(d.transform);
+	}
+
+	//copy other's clickables, updating transform pointers:
+	clickableLocations = other.clickableLocations;
+	for (auto &c : clickableLocations) {
+		c.transform = transform_to_transform.at(c.transform);
 	}
 
 	//copy other's cameras, updating transform pointers:

@@ -12,6 +12,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <random>
+#include <functional>
 
 bool end_game = false;
 
@@ -28,6 +29,13 @@ Load< Scene > counter_scene(LoadTagDefault, []() -> Scene const * {
 
 		scene.drawables.emplace_back(transform);
 		Scene::Drawable &drawable = scene.drawables.back();
+		// std::printf("mesh_name: %s\n", mesh_name.c_str());
+		if (mesh_name.find("Clickable") != std::string::npos) {
+			// Scene::Clickable clickable(transform, mesh.min, mesh.max,);
+			std::cout << "Adding clickable " << mesh_name << std::endl;
+
+			scene.clickableLocations.emplace_back(transform, mesh.min, mesh.max, false);
+		}
 
 		drawable.pipeline = lit_color_texture_program_pipeline;
 
@@ -67,19 +75,6 @@ glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos,
 	return glm::quatLookAt(dir, rotateAround);
 }
 
-void PlayMode::try_submit_recipe(Recipe recipe) {
-	if (recipe_system.recipe_queue.empty()) {
-		return;
-	}
-	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
-		recipe_system.recipe_queue.pop_front();
-		player.score++;
-	}
-	// always delete recipe? not sure if we want that so add warning for now
-	std::cout << "Player turned in recipe, removing from inventory." << std::endl;
-	player.active_recipe = Recipe();
-}
-
 PlayMode::PlayMode() : scene(*counter_scene) {
 	//create a player transform:
 	scene.transforms.emplace_back();
@@ -88,10 +83,10 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 	//create a player camera attached to a child of the player transform:
 	// scene.transforms.emplace_back();
 	// scene.cameras.emplace_back(&scene.transforms.back());
-	player.camera = &scene.cameras.back();
-	player.camera->fovy = glm::radians(60.0f);
-	player.camera->near = 0.01f;
-	player.camera->transform->parent = player.transform;
+	camera = &scene.cameras.back();
+	// camera->fovy = glm::radians(60.0f);
+	// camera->near = 0.01f;
+	// camera->transform->parent = player.transform;
 
 	//player's eyes are 1.8 units above the ground:
 	// player.camera->transform->position = glm::vec3(0.0f, 0.0f, 10.0f);
@@ -108,6 +103,94 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 }
 
 PlayMode::~PlayMode() {
+}
+
+void PlayMode::try_submit_recipe(Recipe recipe) {
+	if (recipe_system.recipe_queue.empty()) {
+		return;
+	}
+	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
+		recipe_system.recipe_queue.pop_front();
+		player.score++;
+	}
+	// always delete recipe? not sure if we want that so add warning for now
+	std::cout << "Player turned in recipe, removing from inventory." << std::endl;
+	player.active_recipe = Recipe();
+}
+
+// Original implementation was to get world space coord from screen coord. Now
+// just gets some point on the ray cuz idk why it's not working.
+glm::vec3 PlayMode::ray_point_from_screen(int x, int y, GLfloat depth) {
+	// get world space coordinates of point at cursor location
+	glm::mat4 projection = camera->make_projection();
+	glm::mat4 view = camera->transform->make_world_to_local();
+	glm::vec4 viewport = glm::vec4(0, 0, windowW, windowH);
+	glm::vec3 wincoord = glm::vec3(x, windowH - y - 1, depth);
+	glm::vec3 worldcoord = glm::unProject(wincoord, view, projection, viewport);
+	std::printf("Method 1: %f, %f, %f\n", worldcoord.x, worldcoord.y, worldcoord.z);
+	// glm::vec4 viewport = glm::vec4(0.0f, 0.0f, windowW, windowH);
+	// glm::vec3 camerapos = camera->transform->position;
+	// glm::vec3 camera_angle = glm::eulerAngles(camera->transform->rotation);
+    // glm::mat4 tmpView = glm::lookAt(camerapos,
+    //                                 camera_angle,glm::vec3(0,1,0)); // up == z?
+    // glm::mat4 tmpProj = glm::perspective( 90.0f, (float)(windowW/windowH), 0.1f, 1000.0f);
+    // glm::vec3 screenPos = glm::vec3(x, windowH-y - 1, 0.0f);
+
+    // glm::vec3 worldcoord = glm::unProject(screenPos, tmpView, tmpProj, viewport);
+	// std::printf("Method 2: %f, %f, %f\n", worldcoord.x, worldcoord.y, worldcoord.z);
+	return worldcoord;
+}
+
+bool PlayMode::bbox_intersect(glm::vec3 pos, glm::vec3 dir, glm::vec3 min, glm::vec3 max) {
+    float tmin = (min.x - pos.x) / dir.x; 
+    float tmax = (max.x - pos.x) / dir.x; 
+ 
+    if (tmin > tmax) std::swap(tmin, tmax); 
+ 
+    float tymin = (min.y - pos.y) / dir.y; 
+    float tymax = (max.y - pos.y) / dir.y; 
+ 
+    if (tymin > tymax) std::swap(tymin, tymax); 
+ 
+    if ((tmin > tymax) || (tymin > tmax)) 
+        return false; 
+ 
+    if (tymin > tmin) 
+        tmin = tymin; 
+ 
+    if (tymax < tmax) 
+        tmax = tymax; 
+ 
+    float tzmin = (min.z - pos.z) / dir.z; 
+    float tzmax = (max.z - pos.z) / dir.z; 
+ 
+    if (tzmin > tzmax) std::swap(tzmin, tzmax); 
+ 
+    if ((tmin > tzmax) || (tzmin > tmax)) 
+        return false; 
+ 
+    if (tzmin > tmin) 
+        tmin = tzmin; 
+ 
+    if (tzmax < tmax) 
+        tmax = tzmax; 
+ 
+    return true; 
+}
+
+Scene::ClickableLocation *PlayMode::trace_ray(glm::vec3 position, glm::vec3 ray) {
+	// std::printf("length of scene.clickables: %lu\n", scene.clic.size());
+	for (auto &it : scene.clickableLocations) {
+		Scene::Transform *clickable_trans = it.transform;
+		glm::vec3 trans_min = clickable_trans->make_local_to_world() * glm::vec4(it.min, 1.f);
+		glm::vec3 trans_max = clickable_trans->make_local_to_world() * glm::vec4(it.max, 1.f);
+		std::printf("transformed min: %f, %f, %f. transformed max: %f, %f, %f\n",
+			trans_min.x, trans_min.y, trans_min.z, trans_max.x, trans_max.y, trans_max.z);
+		if(bbox_intersect(position, ray, trans_min, trans_max)) {
+			return &it;
+		}
+	}
+	return nullptr;
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
@@ -136,10 +219,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_s) {
 			down.downs += 1;
 			down.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_f) {
-			f.downs += 1;
-			f.pressed = true;
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_r) {
 			r.downs += 1;
@@ -170,9 +249,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		} else if (evt.key.keysym.sym == SDLK_s) {
 			down.pressed = false;
 			return true;
-		} else if (evt.key.keysym.sym == SDLK_f) {
-			f.pressed = false;
-			return true;
 		} else if (evt.key.keysym.sym == SDLK_r) {
 			r.pressed = false;
 			return true;
@@ -184,31 +260,60 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			return true;
 		}
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
-		if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
-			SDL_SetRelativeMouseMode(SDL_TRUE);
-			return true;
-		}
-	} else if (evt.type == SDL_MOUSEMOTION) {
-		if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
-			glm::vec2 motion = glm::vec2(
-				evt.motion.xrel / float(window_size.y),
-				-evt.motion.yrel / float(window_size.y)
-			);
-			glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
-			player.transform->rotation = glm::angleAxis(-motion.x * player.camera->fovy, upDir) * player.transform->rotation;
+		// if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
+		// 	SDL_SetRelativeMouseMode(SDL_TRUE);
+		// 	return true;
+		// }
+		handle_click(evt);
+	} 
+	// else if (evt.type == SDL_MOUSEMOTION) {
+	// 	if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
+	// 		glm::vec2 motion = glm::vec2(
+	// 			evt.motion.xrel / float(window_size.y),
+	// 			-evt.motion.yrel / float(window_size.y)
+	// 		);
+	// 		glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
+	// 		player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
 
-			float pitch = glm::pitch(player.camera->transform->rotation);
-			pitch += motion.y * player.camera->fovy;
-			//camera looks down -z (basically at the player's feet) when pitch is at zero.
-			pitch = std::min(pitch, 0.95f * 3.1415926f);
-			pitch = std::max(pitch, 0.05f * 3.1415926f);
-			player.camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
+	// 		float pitch = glm::pitch(camera->transform->rotation);
+	// 		pitch += motion.y * camera->fovy;
+	// 		//camera looks down -z (basically at the player's feet) when pitch is at zero.
+	// 		pitch = std::min(pitch, 0.95f * 3.1415926f);
+	// 		pitch = std::max(pitch, 0.05f * 3.1415926f);
+	// 		camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
 
-			return true;
-		}
-	}
+	// 		return true;
+	// 	}
+	// }
 
 	return false;
+}
+
+void PlayMode::handle_click(SDL_Event evt) {
+	int x = evt.button.x;
+	int y = evt.button.y;
+	GLfloat depth;
+	glReadPixels(x, y, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
+	glm::vec3 ray_point = ray_point_from_screen(x, y, depth);
+	// Maybe swap order of these?
+	// ASSUME CAMERA HAS NO PARENT
+	// For some reason (I think it's the rotation component) applying the
+	// make_local_to_world() matrix messes up the position.
+	// glm::vec4 camera_pos_homo = glm::vec4(camera->transform->position, 1.0f);
+	std::printf("camera->transform->scale: %f, %f, %f\n", camera->transform->scale.x, camera->transform->scale.y, camera->transform->scale.z);
+	// glm::vec3 camera_world_pos = camera->transform->make_local_to_world() * camera_pos_homo;
+	std::printf("camera local pos: %f, %f, %f\n", camera->transform->position.x, camera->transform->position.y, camera->transform->position.z);
+	// std::printf("camera_world_pos: %f, %f, %f\n", camera_world_pos.x, camera_world_pos.y, camera_world_pos.z);
+	std::printf("point: %f, %f, %f\n", ray_point.x, ray_point.y, ray_point.z);
+	// glm::vec3 ray = glm::normalize(ray_point - camera_world_pos);
+	glm::vec3 ray = glm::normalize(ray_point - camera->transform->position);
+	std::printf("ray: %f, %f, %f\n", ray.x, ray.y, ray.z);
+	Scene::ClickableLocation *clickableLocation = trace_ray(camera->transform->position, ray);
+	if (clickableLocation != nullptr) {
+		clickableLocation->on_click(player.transform);
+	} else {
+		std::cout << "no clickable detected\n";
+	}
 }
 
 void PlayMode::update(float elapsed) {
@@ -217,10 +322,6 @@ void PlayMode::update(float elapsed) {
 	
 	//player walking:
 	{
-		if (recipe_system.recipe_queue.size() >= 5) {
-			recipe_system.q_signal = true;
-			end_game = true;
-		}
 
 		//combine inputs into a move:
 		constexpr float PlayerSpeed = 3.0f;
@@ -305,22 +406,6 @@ void PlayMode::update(float elapsed) {
 		*/
 	}
 
-	// get "click" location:
-	if (f.pressed) {
-		// get depth component of object at cursor location
-		// center of screen for now
-		GLfloat depth;
-		glReadPixels(windowW / 2, windowH / 2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &depth);
-		// get world space coordinates of point at cursor location
-		// center of screen for now
-		glm::mat4 projection = player.camera->make_projection();
-		glm::mat4 view = player.camera->transform->make_world_to_local();
-		glm::vec4 viewport = glm::vec4(0, 0, windowW, windowH);
-		glm::vec3 wincoord = glm::vec3(windowW / 2, windowH / 2, depth);
-		glm::vec3 worldcoord = glm::unProject(wincoord, view, projection, viewport);
-		std::printf("Method 1: %f, %f, %f\n", worldcoord.x, worldcoord.y, worldcoord.z);
-	}
-
 	// debug stuff
 	if (r.pressed && r.downs == 1) {
 		player.active_recipe.AddIngredient("rice");
@@ -337,7 +422,6 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
-	f.downs = 0;
 	r.downs = 0;
 	c_button.downs = 0;
 	p_button.downs = 0;
@@ -345,7 +429,7 @@ void PlayMode::update(float elapsed) {
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	//update camera aspect ratio for drawable:
-	player.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
@@ -362,7 +446,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
-	scene.draw(*player.camera);
+	scene.draw(*camera);
 
 	/* In case you are wondering if your walkmesh is lining up with your scene, try:
 	{

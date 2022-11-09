@@ -11,13 +11,16 @@ struct RecipeInfo {
 	RecipeInfo(RecipeInfo* recipe_info);
 };
 struct Recipe {
+	size_t max_sides = 100;
 	std::vector<std::string> sides;
+	size_t max_entrees = 100;
 	std::vector<std::string> entrees;
 	RecipeInfo* recipe_info;
-	Recipe();
-	Recipe(std::vector<std::string>_sides, std::vector<std::string>_entrees, RecipeInfo* _recipe_info);
-	void AddSide(std::string side);
-	void AddEntree(std::string entree);
+	Recipe(size_t _max_sides = 1, size_t _max_entrees = 2);
+	Recipe(std::vector<std::string>_sides, std::vector<std::string>_entrees, RecipeInfo* _recipe_info,
+		size_t _max_sides = 1, size_t _max_entrees = 2);
+	void TryAddSide(std::string side);
+	void TryAddEntree(std::string entree);
 	bool is_match(Recipe* _recipe); //check if the ingredients of two recipes match
 	// Eventually we'll need to provide more info such as the names of the
 	// children so that we can find them and texture them

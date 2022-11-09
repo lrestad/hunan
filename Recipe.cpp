@@ -1,4 +1,5 @@
 #include "Recipe.hpp"
+#include <algorithm>
 #include <random>
 #include <iostream>
 #include <chrono>
@@ -18,13 +19,17 @@ const std::string Recipe::inventory_meshname_map[2][3] = {
 
 RecipeInfo::RecipeInfo() {}
 RecipeInfo::RecipeInfo(RecipeInfo * recipe_info) {}
-Recipe::Recipe() {};
+Recipe::Recipe(size_t _max_sides, size_t _max_entrees) :
+	max_sides(_max_sides), max_entrees(_max_entrees) {}
 Recipe::Recipe(
-	std::vector<std::string>_sides, std::vector<std::string>_entrees, RecipeInfo* _recipe_info)
+	std::vector<std::string>_sides, std::vector<std::string>_entrees, RecipeInfo* _recipe_info,
+		size_t _max_sides, size_t _max_entrees)
 {
 	sides = std::vector<std::string>(_sides.begin(), _sides.end());
 	entrees = std::vector<std::string>(_entrees.begin(), _entrees.end());
 	recipe_info = new RecipeInfo(_recipe_info);
+	max_sides = _max_sides;
+	max_entrees = _max_entrees;
 }
 bool Recipe::is_match(Recipe* _recipe) {
 	std::vector<std::string> entrees1 = entrees;
@@ -37,14 +42,18 @@ bool Recipe::is_match(Recipe* _recipe) {
 	std::sort(sides2.begin(), sides2.end());
 	return sides1 == sides2 && entrees1 == entrees2;
 }
-void Recipe::AddSide(std::string side) {
-	sides.push_back(side);
+void Recipe::TryAddSide(std::string side) {
+	if (sides.size() < max_sides)
+		sides.push_back(side);
 }
-void Recipe::AddEntree(std::string entree) {
-	entrees.push_back(entree);
+void Recipe::TryAddEntree(std::string entree) {
+	if (entrees.size() < max_entrees)
+		entrees.push_back(entree);
 }
 std::string Recipe::mesh_name_from_recipe(const Recipe &recipe) {
-	return Recipe::inventory_meshname_map[recipe.sides.size()][recipe.entrees.size()];
+	size_t row = std::min(recipe.sides.size(), 1UL);
+	size_t col = std::min(recipe.entrees.size(), 2UL);
+	return Recipe::inventory_meshname_map[row][col];
 }
 void RecipeQueueSystem::init(){}
 void RecipeQueueSystem::start(long interval){

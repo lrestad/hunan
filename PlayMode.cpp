@@ -178,7 +178,7 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 	}
 	// always delete recipe? not sure if we want that so add warning for now
 	std::cout << "Player turned in recipe, removing from inventory." << std::endl;
-	player.active_recipe = Recipe();
+	player.active_recipe = Recipe(1, 2);
 }
 
 // Original implementation was to get world space coord from screen coord. Now
@@ -489,10 +489,10 @@ void PlayMode::update(float elapsed) {
 
 	// debug stuff
 	if (r.pressed && r.downs == 1) {
-		player.active_recipe.AddSide("rice");
+		player.active_recipe.TryAddSide("rice");
 	}
 	if (c_button.pressed && c_button.downs == 1) {
-		player.active_recipe.AddEntree("chicken");
+		player.active_recipe.TryAddEntree("chicken");
 	}
 	if (p_button.pressed) {
 		try_submit_recipe(player.active_recipe);

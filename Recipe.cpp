@@ -86,6 +86,6 @@ Recipe * RecipeQueueSystem::generate_recipe() {
 		entrees.push_back(possible_entrees[ingred_idx]);
 	}
 	RecipeInfo recipe_info; 
-	Recipe* recipe = new Recipe(sides, entrees, &recipe_info);
+	Recipe* recipe = new Recipe(sides, entrees, &recipe_info, 100, 100);
 	return recipe;
 }

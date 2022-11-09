@@ -6,20 +6,28 @@ RecipeInfo::RecipeInfo() {}
 RecipeInfo::RecipeInfo(RecipeInfo * recipe_info) {}
 Recipe::Recipe() {};
 Recipe::Recipe(
-	std::vector<std::string>_ingredients, RecipeInfo* _recipe_info)
+	std::vector<std::string>_sides, std::vector<std::string>_entrees, RecipeInfo* _recipe_info)
 {
-	ingredients = std::vector<std::string>(_ingredients.begin(), _ingredients.end());
+	sides = std::vector<std::string>(_sides.begin(), _sides.end());
+	entrees = std::vector<std::string>(_entrees.begin(), _entrees.end());
 	recipe_info = new RecipeInfo(_recipe_info);
 }
 bool Recipe::is_match(Recipe* _recipe) {
-	std::vector<std::string> ingreds = ingredients;
-	std::vector<std::string> _ingreds = _recipe -> ingredients;
-	std::sort(ingreds.begin(), ingreds.end());
-	std::sort(_ingreds.begin(), _ingreds.end());
-	return ingreds == _ingreds;
+	std::vector<std::string> entrees1 = entrees;
+	std::vector<std::string> entrees2 = _recipe -> entrees;
+	std::sort(entrees1.begin(), entrees1.end());
+	std::sort(entrees2.begin(), entrees2.end());
+	std::vector<std::string> sides1 = sides;
+	std::vector<std::string> sides2 = _recipe -> sides;
+	std::sort(sides1.begin(), sides1.end());
+	std::sort(sides2.begin(), sides2.end());
+	return sides1 == sides2 && entrees1 == entrees2;
 }
-void Recipe::AddIngredient(std::string ingredient) {
-	ingredients.push_back(ingredient);
+void Recipe::AddSide(std::string side) {
+	sides.push_back(side);
+}
+void Recipe::AddEntree(std::string entree) {
+	entrees.push_back(entree);
 }
 void RecipeQueueSystem::init(){}
 void RecipeQueueSystem::start(long interval){
@@ -42,18 +50,16 @@ void RecipeQueueSystem::start(long interval){
 }
 Recipe * RecipeQueueSystem::generate_recipe() {
 	//hardcode for now
-	int num_sides = rand() % 2 + 1;
 	int num_entrees = rand() % 2 + 1;
-	std::vector<std::string>ingredients;
-	for (int i = 0; i < num_sides; ++i) {
-		int ingred_idx = rand() % possible_sides.size();
-		ingredients.push_back(possible_sides[ingred_idx]);
-	}
+	std::vector<std::string> sides;
+	std::vector<std::string> entrees;
+	int ingred_idx = rand() % possible_sides.size();
+	sides.push_back(possible_sides[ingred_idx]);
 	for (int i = 0; i < num_entrees; ++i) {
-		int ingred_idx = rand() % possible_entrees.size();
-		ingredients.push_back(possible_entrees[ingred_idx]);
+		ingred_idx = rand() % possible_entrees.size();
+		entrees.push_back(possible_entrees[ingred_idx]);
 	}
 	RecipeInfo recipe_info; 
-	Recipe* recipe = new Recipe(ingredients, &recipe_info);
+	Recipe* recipe = new Recipe(sides, entrees, &recipe_info);
 	return recipe;
 }

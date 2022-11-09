@@ -11,19 +11,21 @@ struct RecipeInfo {
 	RecipeInfo(RecipeInfo* recipe_info);
 };
 struct Recipe {
-	std::vector<std::string> ingredients;
+	std::vector<std::string> sides;
+	std::vector<std::string> entrees;
 	RecipeInfo* recipe_info;
 	Recipe();
-	Recipe(std::vector<std::string>_ingredients, RecipeInfo* _recipe_info);
-	void AddIngredient(std::string ingredient);
+	Recipe(std::vector<std::string>_sides, std::vector<std::string>_entrees, RecipeInfo* _recipe_info);
+	void AddSide(std::string side);
+	void AddEntree(std::string entree);
 	bool is_match(Recipe* _recipe); //check if the ingredients of two recipes match
 };
 
 struct RecipeQueueSystem{
 
 	//dummy ingredient list contains all possible ingredients.
-	std::vector<std::string>possible_sides = {"rice"};
-	std::vector<std::string>possible_entrees = {"chicken"};
+	std::vector<std::string>possible_sides = {"rice", "noodles"};
+	std::vector<std::string>possible_entrees = {"chicken", "dumpling", "veggies"};
 
 	std::deque<Recipe *>recipe_queue;
 	std::mutex q_mtx;

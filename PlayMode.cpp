@@ -464,10 +464,10 @@ void PlayMode::update(float elapsed) {
 
 	// debug stuff
 	if (r.pressed && r.downs == 1) {
-		player.active_recipe.AddIngredient("rice");
+		player.active_recipe.AddSide("rice");
 	}
 	if (c_button.pressed && c_button.downs == 1) {
-		player.active_recipe.AddIngredient("chicken");
+		player.active_recipe.AddEntree("chicken");
 	}
 	if (p_button.pressed) {
 		try_submit_recipe(player.active_recipe);
@@ -543,10 +543,12 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		std::unique_lock<std::mutex>q_lock(recipe_system.q_mtx);
 		int cnt = 1;
 		for (Recipe* recipe : recipe_system.recipe_queue) {
-			std::vector<std::string> ingredients = recipe->ingredients;
 			std::string display_text = "Recipe " + std::to_string(cnt++) + ": ";
 
-			for (std::string ingred : ingredients) {
+			for (std::string ingred : recipe->sides) {
+				display_text += ingred + ", ";
+			}
+			for (std::string ingred : recipe->entrees) {
 				display_text += ingred + ", ";
 			}
 			textRenderer.render_text(display_text, (float)0, (float)windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
@@ -555,7 +557,11 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		// player active recipe
 		textRenderer.render_text("inventory:", windowW - 160.0f, windowH - 40.0f, 0.5f, glm::vec3(1.0f));
 		cnt = 3;
-		for (std::string ingred : player.active_recipe.ingredients) {
+		for (std::string ingred : player.active_recipe.sides) {
+			textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
+			cnt++;
+		}
+		for (std::string ingred : player.active_recipe.entrees) {
 			textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
 			cnt++;
 		}

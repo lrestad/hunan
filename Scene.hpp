@@ -141,6 +141,7 @@ struct Scene {
 	std::list< ClickableLocation > clickableLocations;
 	std::list< Camera > cameras;
 	std::list< Light > lights;
+	std::unordered_map< std::string, int > mesh_name_to_drawables_idx;
 
 	//The "draw" function provides a convenient way to pass all the things in a scene to OpenGL:
 	void draw(Camera const &camera) const;

@@ -35,6 +35,10 @@ Load< Scene > counter_scene(LoadTagDefault, []() -> Scene const * {
 			std::cout << "Adding clickable " << mesh_name << std::endl;
 
 			scene.clickableLocations.emplace_back(transform, mesh.min, mesh.max, false);
+		} else if (mesh_name.find("Styrofoam.Base.0") != std::string::npos) {
+			std::cout << "Adding styrofoam " << mesh_name << std::endl;
+			scene.mesh_name_to_drawables_idx[mesh_name] = 
+				scene.drawables.size() - 1;
 		}
 
 		drawable.pipeline = lit_color_texture_program_pipeline;
@@ -122,10 +126,13 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 		scene.transforms.emplace_back();
 		Scene::Transform *inventory_transform = &scene.transforms.back();
 		inventory_transform->position = inventory_start_pos;
+		// temporary: move off-screen. might not need this at all tbh.
+		inventory_transform->position.x = 100.0f;
 		inventory_transform->rotation = inventory_rot;
 		Mesh const &inventory_mesh = counter_meshes->lookup("Styrofoam.Base.Inventory");
 
 		scene.drawables.emplace_back(inventory_transform);
+		player.inventory_drawable = &scene.drawables.back();
 		Scene::Drawable &inventory_drawable = scene.drawables.back();
 
 		inventory_drawable.pipeline = lit_color_texture_program_pipeline;
@@ -460,6 +467,24 @@ void PlayMode::update(float elapsed) {
 
 	// 	camera->transform->position += move.x * right + move.y * forward;
 	// 	*/
+	}
+
+	// Update player's inventory drawable
+	// For now just a diff mesh
+	{
+		std::string inventory_mesh_name = 
+			Recipe::mesh_name_from_recipe(player.active_recipe);
+		std::cout << "current inventory_mesh_name: " << inventory_mesh_name << "\n";
+		Scene::Drawable *old_drawable = player.inventory_drawable;
+		if (old_drawable != nullptr) {
+			old_drawable->transform->position.z = -100.0f;
+		}
+		int drawables_idx = scene.mesh_name_to_drawables_idx[inventory_mesh_name];
+		auto drawables_it = scene.drawables.begin();
+		std::advance(drawables_it, drawables_idx);
+		player.inventory_drawable = &(*drawables_it);
+		player.inventory_drawable->transform->position = inventory_start_pos;
+		player.inventory_drawable->transform->rotation = inventory_rot;
 	}
 
 	// debug stuff

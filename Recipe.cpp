@@ -2,6 +2,20 @@
 #include <random>
 #include <iostream>
 #include <chrono>
+
+const std::string Recipe::inventory_meshname_map[2][3] = {
+	{							// no side
+		{"Styrofoam.Base.000"},	// no entrees
+		{"Styrofoam.Base.002"}, // one entree
+		{"Styrofoam.Base.006"}	// two entrees
+	},
+	{							// yes side
+		{"Styrofoam.Base.001"},	// no entrees
+		{"Styrofoam.Base.003"}, // one entree
+		{"Styrofoam.Base.007"}	// both entrees
+	}
+};
+
 RecipeInfo::RecipeInfo() {}
 RecipeInfo::RecipeInfo(RecipeInfo * recipe_info) {}
 Recipe::Recipe() {};
@@ -28,6 +42,9 @@ void Recipe::AddSide(std::string side) {
 }
 void Recipe::AddEntree(std::string entree) {
 	entrees.push_back(entree);
+}
+std::string Recipe::mesh_name_from_recipe(const Recipe &recipe) {
+	return Recipe::inventory_meshname_map[recipe.sides.size()][recipe.entrees.size()];
 }
 void RecipeQueueSystem::init(){}
 void RecipeQueueSystem::start(long interval){

@@ -383,6 +383,9 @@ void Scene::set(Scene const &other, std::unordered_map< Transform const *, Trans
 		c.transform = transform_to_transform.at(c.transform);
 	}
 
+	//copy other's mesh_name_to_drawable_idx
+	mesh_name_to_drawables_idx = other.mesh_name_to_drawables_idx;
+
 	//copy other's cameras, updating transform pointers:
 	cameras = other.cameras;
 	for (auto &c : cameras) {

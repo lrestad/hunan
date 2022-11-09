@@ -50,6 +50,8 @@ struct PlayMode : Mode {
 		float action_time_left = 0.0f;
 		// Player's score.
 		int score = 0;
+		// Player's styrofoam container.
+		Scene::Drawable *inventory_drawable = nullptr;
 
 		// Methods
 

@@ -76,9 +76,41 @@ glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos,
 }
 
 PlayMode::PlayMode() : scene(*counter_scene) {
-	//create a player transform:
-	scene.transforms.emplace_back();
-	player.transform = &scene.transforms.back();
+	//create a player and hat transform:
+	{
+		scene.transforms.emplace_back();
+		Scene::Transform *player_transform = &scene.transforms.back();
+		player.transform = player_transform;
+		player.transform->position = glm::vec3(0, -8.9f, 3.5f);
+		Mesh const &player_mesh = counter_meshes->lookup("Player.Capsule");
+
+		scene.drawables.emplace_back(player_transform);
+		Scene::Drawable &player_drawable = scene.drawables.back();
+
+		player_drawable.pipeline = lit_color_texture_program_pipeline;
+
+		player_drawable.pipeline.vao = counter_meshes_for_lit_color_texture_program;
+		player_drawable.pipeline.type = player_mesh.type;
+		player_drawable.pipeline.start = player_mesh.start;
+		player_drawable.pipeline.count = player_mesh.count;
+		
+		// hat
+		scene.transforms.emplace_back();
+		Scene::Transform *hat_transform = &scene.transforms.back();
+		hat_transform->parent = player_transform;
+		hat_transform->position = glm::vec3(0, 0, 3.5f);
+		Mesh const &hat_mesh = counter_meshes->lookup("Player.Hat");
+
+		scene.drawables.emplace_back(hat_transform);
+		Scene::Drawable &hat_drawable = scene.drawables.back();
+
+		hat_drawable.pipeline = lit_color_texture_program_pipeline;
+
+		hat_drawable.pipeline.vao = counter_meshes_for_lit_color_texture_program;
+		hat_drawable.pipeline.type = hat_mesh.type;
+		hat_drawable.pipeline.start = hat_mesh.start;
+		hat_drawable.pipeline.count = hat_mesh.count;
+	}
 
 	//create a player camera attached to a child of the player transform:
 	// scene.transforms.emplace_back();
@@ -95,7 +127,7 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 	// player.camera->transform->rotation = glm::angleAxis(glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
 	//start player walking at nearest walk point:
-	player.at = walkmesh->nearest_walk_point(player.transform->position);
+	// player.at = walkmesh->nearest_walk_point(player.transform->position);
 
 	recipe_system.start(1500);
 
@@ -323,87 +355,87 @@ void PlayMode::update(float elapsed) {
 	//player walking:
 	{
 
-		//combine inputs into a move:
-		constexpr float PlayerSpeed = 3.0f;
-		glm::vec2 move = glm::vec2(0.0f);
-		if (left.pressed && !right.pressed) move.x =-1.0f;
-		if (!left.pressed && right.pressed) move.x = 1.0f;
-		if (down.pressed && !up.pressed) move.y =-1.0f;
-		if (!down.pressed && up.pressed) move.y = 1.0f;
+	// 	//combine inputs into a move:
+	// 	constexpr float PlayerSpeed = 3.0f;
+	// 	glm::vec2 move = glm::vec2(0.0f);
+	// 	if (left.pressed && !right.pressed) move.x =-1.0f;
+	// 	if (!left.pressed && right.pressed) move.x = 1.0f;
+	// 	if (down.pressed && !up.pressed) move.y =-1.0f;
+	// 	if (!down.pressed && up.pressed) move.y = 1.0f;
 
-		//make it so that moving diagonally doesn't go faster:
-		if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
+	// 	//make it so that moving diagonally doesn't go faster:
+	// 	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
 
-		//get move in world coordinate system:
-		glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
+	// 	//get move in world coordinate system:
+	// 	glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
 
-		//using a for() instead of a while() here so that if walkpoint gets stuck in
-		// some awkward case, code will not infinite loop:
-		for (uint32_t iter = 0; iter < 10; ++iter) {
-			if (remain == glm::vec3(0.0f)) break;
-			WalkPoint end;
-			float time;
-			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
-			player.at = end;
-			if (time == 1.0f) {
-				//finished within triangle:
-				remain = glm::vec3(0.0f);
-				break;
-			}
-			//some step remains:
-			remain *= (1.0f - time);
-			//try to step over edge:
-			glm::quat rotation;
-			if (walkmesh->cross_edge(player.at, &end, &rotation)) {
-				//stepped to a new triangle:
-				player.at = end;
-				//rotate step to follow surface:
-				remain = rotation * remain;
-			} else {
-				//ran into a wall, bounce / slide along it:
-				glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
-				glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
-				glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
-				glm::vec3 along = glm::normalize(b-a);
-				glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
-				glm::vec3 in = glm::cross(normal, along);
+	// 	//using a for() instead of a while() here so that if walkpoint gets stuck in
+	// 	// some awkward case, code will not infinite loop:
+	// 	for (uint32_t iter = 0; iter < 10; ++iter) {
+	// 		if (remain == glm::vec3(0.0f)) break;
+	// 		WalkPoint end;
+	// 		float time;
+	// 		walkmesh->walk_in_triangle(player.at, remain, &end, &time);
+	// 		player.at = end;
+	// 		if (time == 1.0f) {
+	// 			//finished within triangle:
+	// 			remain = glm::vec3(0.0f);
+	// 			break;
+	// 		}
+	// 		//some step remains:
+	// 		remain *= (1.0f - time);
+	// 		//try to step over edge:
+	// 		glm::quat rotation;
+	// 		if (walkmesh->cross_edge(player.at, &end, &rotation)) {
+	// 			//stepped to a new triangle:
+	// 			player.at = end;
+	// 			//rotate step to follow surface:
+	// 			remain = rotation * remain;
+	// 		} else {
+	// 			//ran into a wall, bounce / slide along it:
+	// 			glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
+	// 			glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
+	// 			glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
+	// 			glm::vec3 along = glm::normalize(b-a);
+	// 			glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
+	// 			glm::vec3 in = glm::cross(normal, along);
 
-				//check how much 'remain' is pointing out of the triangle:
-				float d = glm::dot(remain, in);
-				if (d < 0.0f) {
-					//bounce off of the wall:
-					remain += (-1.25f * d) * in;
-				} else {
-					//if it's just pointing along the edge, bend slightly away from wall:
-					remain += 0.01f * d * in;
-				}
-			}
-		}
+	// 			//check how much 'remain' is pointing out of the triangle:
+	// 			float d = glm::dot(remain, in);
+	// 			if (d < 0.0f) {
+	// 				//bounce off of the wall:
+	// 				remain += (-1.25f * d) * in;
+	// 			} else {
+	// 				//if it's just pointing along the edge, bend slightly away from wall:
+	// 				remain += 0.01f * d * in;
+	// 			}
+	// 		}
+	// 	}
 
-		if (remain != glm::vec3(0.0f)) {
-			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
-		}
+	// 	if (remain != glm::vec3(0.0f)) {
+	// 		std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
+	// 	}
 
-		//update player's position to respect walking:
-		player.transform->position = walkmesh->to_world_point(player.at);
+	// 	//update player's position to respect walking:
+	// 	player.transform->position = walkmesh->to_world_point(player.at);
 
-		{ //update player's rotation to respect local (smooth) up-vector:
+	// 	{ //update player's rotation to respect local (smooth) up-vector:
 			
-			glm::quat adjust = glm::rotation(
-				player.transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
-				walkmesh->to_world_smooth_normal(player.at) //smoothed up vector at walk location
-			);
-			player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
-		}
+	// 		glm::quat adjust = glm::rotation(
+	// 			player.transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
+	// 			walkmesh->to_world_smooth_normal(player.at) //smoothed up vector at walk location
+	// 		);
+	// 		player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
+	// 	}
 
-		/*
-		glm::mat4x3 frame = camera->transform->make_local_to_parent();
-		glm::vec3 right = frame[0];
-		//glm::vec3 up = frame[1];
-		glm::vec3 forward = -frame[2];
+	// 	/*
+	// 	glm::mat4x3 frame = camera->transform->make_local_to_parent();
+	// 	glm::vec3 right = frame[0];
+	// 	//glm::vec3 up = frame[1];
+	// 	glm::vec3 forward = -frame[2];
 
-		camera->transform->position += move.x * right + move.y * forward;
-		*/
+	// 	camera->transform->position += move.x * right + move.y * forward;
+	// 	*/
 	}
 
 	// debug stuff

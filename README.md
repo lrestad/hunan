@@ -26,5 +26,11 @@ Text Rendering code modified from Dakota's game4, developed with Denise Yang (de
 verbal permission. Code originally developed based off of
 [https://learnopengl.com/In-Practice/Text-Rendering](https://learnopengl.com/In-Practice/Text-Rendering)
 
+Clicking and object collision used from team PewPew, oritinally adapted from 15-462 code.
+
+"Cooking Pot Low Poly" (https://skfb.ly/ooMVN) by imlcbaylor is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+
+Dumpling models from [https://www.turbosquid.com/3d-models/3d-dumpling-1923633](https://www.turbosquid.com/3d-models/3d-dumpling-1923633)
+
 This game was built with [NEST](NEST.md).
 

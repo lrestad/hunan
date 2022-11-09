@@ -75,13 +75,18 @@ glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos,
 	return glm::quatLookAt(dir, rotateAround);
 }
 
+// This is a prety bad way to do things but it works for now
+const glm::vec3 player_start_pos = glm::vec3(0, -8.9f, 3.5f);
+const glm::vec3 hat_start_pos = glm::vec3(0, 0, 3.5f);
+const glm::vec3 inventory_start_pos = glm::vec3(4.04f, -17.98f, 27.59f);
+const glm::quat inventory_rot = glm::quat(glm::vec3(glm::radians(120.0f), 0, 0));
 PlayMode::PlayMode() : scene(*counter_scene) {
 	//create a player and hat transform:
 	{
 		scene.transforms.emplace_back();
 		Scene::Transform *player_transform = &scene.transforms.back();
 		player.transform = player_transform;
-		player.transform->position = glm::vec3(0, -8.9f, 3.5f);
+		player.transform->position = player_start_pos;
 		Mesh const &player_mesh = counter_meshes->lookup("Player.Capsule");
 
 		scene.drawables.emplace_back(player_transform);
@@ -98,7 +103,7 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 		scene.transforms.emplace_back();
 		Scene::Transform *hat_transform = &scene.transforms.back();
 		hat_transform->parent = player_transform;
-		hat_transform->position = glm::vec3(0, 0, 3.5f);
+		hat_transform->position = hat_start_pos;
 		Mesh const &hat_mesh = counter_meshes->lookup("Player.Hat");
 
 		scene.drawables.emplace_back(hat_transform);
@@ -110,6 +115,25 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 		hat_drawable.pipeline.type = hat_mesh.type;
 		hat_drawable.pipeline.start = hat_mesh.start;
 		hat_drawable.pipeline.count = hat_mesh.count;
+	}
+
+	// test: spawn styrofoam in styrofoam start location and then move to the side
+	{
+		scene.transforms.emplace_back();
+		Scene::Transform *inventory_transform = &scene.transforms.back();
+		inventory_transform->position = inventory_start_pos;
+		inventory_transform->rotation = inventory_rot;
+		Mesh const &inventory_mesh = counter_meshes->lookup("Styrofoam.Base.Inventory");
+
+		scene.drawables.emplace_back(inventory_transform);
+		Scene::Drawable &inventory_drawable = scene.drawables.back();
+
+		inventory_drawable.pipeline = lit_color_texture_program_pipeline;
+
+		inventory_drawable.pipeline.vao = counter_meshes_for_lit_color_texture_program;
+		inventory_drawable.pipeline.type = inventory_mesh.type;
+		inventory_drawable.pipeline.start = inventory_mesh.start;
+		inventory_drawable.pipeline.count = inventory_mesh.count;
 	}
 
 	//create a player camera attached to a child of the player transform:

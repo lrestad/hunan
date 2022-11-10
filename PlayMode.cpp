@@ -63,7 +63,7 @@ Load< Scene > counter_scene(LoadTagDefault, []() -> Scene const * {
 		} else if (mesh_name.find("Styrofoam.Base.0") != std::string::npos) {
 			std::cout << "Adding styrofoam " << mesh_name << std::endl;
 			scene.mesh_name_to_drawables_idx[mesh_name] = 
-				scene.drawables.size() - 1;
+				(int)scene.drawables.size() - 1;
 
 			// drawable.pipeline.textures[0].texture = tex;
 			// drawable.pipeline.textures[0].target = GL_TEXTURE_2D;

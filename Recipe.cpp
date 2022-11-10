@@ -51,8 +51,8 @@ void Recipe::TryAddEntree(std::string entree) {
 		entrees.push_back(entree);
 }
 std::string Recipe::mesh_name_from_recipe(const Recipe &recipe) {
-	size_t row = std::min(recipe.sides.size(), 1UL);
-	size_t col = std::min(recipe.entrees.size(), 2UL);
+	size_t row = std::min((unsigned long)recipe.sides.size(), 1UL);
+	size_t col = std::min((unsigned long)recipe.entrees.size(), 2UL);
 	return Recipe::inventory_meshname_map[row][col];
 }
 void RecipeQueueSystem::init(){}

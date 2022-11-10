@@ -85,7 +85,6 @@ struct Scene {
 		ClickableLocation(Scene::Transform *transform_, glm::vec3 min_, glm::vec3 max_,
 		bool update_z_);
 		~ClickableLocation() {};
-		void on_click(Scene::Transform *to_move);
 
 		Scene::Transform *transform;
 		// Scene::Drawable *drawable;

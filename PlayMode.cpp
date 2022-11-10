@@ -46,6 +46,22 @@ GLuint load_texture(std::string const &filename) {
 	return tex;
 }
 
+// temporary empty texture
+Load< GLuint > empty_tex(LoadTagDefault, []() {
+	GLuint tex;
+	glGenTextures(1, &tex);
+
+	glBindTexture(GL_TEXTURE_2D, tex);
+	std::vector< glm::u8vec4 > tex_data(1, glm::u8vec4(0xff));
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, tex_data.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return new GLuint(tex);
+});
+
 Load< GLuint > rice_tex(LoadTagDefault, [](){
 	return new GLuint(load_texture(data_path("textures/rice.png")));
 });
@@ -66,7 +82,15 @@ Load< GLuint > dumplings_tex(LoadTagDefault, [](){
 	return new GLuint(load_texture(data_path("textures/dumplings.png")));
 });
 
+Load< GLuint > cash_register_tex(LoadTagDefault, [](){
+	return new GLuint(load_texture(data_path("textures/CashRegister.png")));
+});
+
 std::map< std::string, GLuint > ingredient_to_tex;
+enum simplified_clickable_name {
+	rice, noodles, chicken, dumpling, veggies, checkout, neutral, styrofoam
+};
+std::map< std::string, simplified_clickable_name > clickable_location_name_to_simplified;
 
 Load< Scene > counter_scene(LoadTagDefault, []() -> Scene const * {
 
@@ -89,7 +113,9 @@ Load< Scene > counter_scene(LoadTagDefault, []() -> Scene const * {
 			std::cout << "Adding clickable " << mesh_name << std::endl;
 
 			scene.clickableLocations.emplace_back(transform, mesh.min, mesh.max, false);
-		} 
+		} else if (mesh_name.find("Cash Register") != std::string::npos) {
+			drawable.pipeline.textures[0].texture = *cash_register_tex;
+		}
 		// else if (mesh_name.find("Styrofoam.Base.0") != std::string::npos) {
 		// 	std::cout << "Adding styrofoam " << mesh_name << std::endl;
 		// 	scene.mesh_name_to_drawables_idx[mesh_name] = 
@@ -238,6 +264,21 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 			{"chicken", *chicken_tex},
 			{"dumpling", *dumplings_tex},
 			{"veggies", *vegetables_tex}
+		};
+	}
+
+	// Create map from clickable location names to textures
+	{
+		clickable_location_name_to_simplified = {
+			{"Clickable.Styrofoam", styrofoam},
+			{"Clickable.Chicken", chicken},
+			{"Clickable.Checkout.001", checkout},
+			{"Clickable.Checkout.002", checkout},
+			{"Clickable.Rice", rice},
+			{"Clickable.Noodles", noodles},
+			{"Clickable.Vegetables", veggies},
+			{"Clickable.Dumplings", dumpling},
+			{"Clickable.Neutral", neutral}
 		};
 	}
 
@@ -471,9 +512,48 @@ void PlayMode::handle_click(SDL_Event evt) {
 	std::printf("ray: %f, %f, %f\n", ray.x, ray.y, ray.z);
 	Scene::ClickableLocation *clickableLocation = trace_ray(camera->transform->position, ray);
 	if (clickableLocation != nullptr) {
-		clickableLocation->on_click(player.transform);
+		on_click_location(clickableLocation, player.transform);
 	} else {
 		std::cout << "no clickable detected\n";
+	}
+}
+
+void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Scene::Transform *to_move) {
+	if (clickableLocation == nullptr)
+		return;
+	std::printf("Clicked on %s\n", clickableLocation->transform->name.c_str());
+	to_move->position.x = clickableLocation->transform->position.x;
+	to_move->position.y = clickableLocation->transform->position.y;
+	if (clickableLocation->update_z)
+		to_move->position.z = clickableLocation->transform->position.z;
+	// add rotating?
+	simplified_clickable_name simplified = 
+		clickable_location_name_to_simplified[clickableLocation->transform->name];
+	switch (simplified) {
+	case rice:
+		player.active_recipe.TryAddSide("rice");
+		break;
+	case noodles:
+		player.active_recipe.TryAddSide("noodles");
+		break;
+	case chicken:
+		player.active_recipe.TryAddEntree("chicken");
+		break;
+	case dumpling:
+		player.active_recipe.TryAddEntree("dumpling");
+		break;
+	case veggies:
+		player.active_recipe.TryAddEntree("veggies");
+		break;
+	case checkout:
+		try_submit_recipe(player.active_recipe);
+		break;
+	case styrofoam:
+		player.active_recipe = Recipe(1, 2);
+		break;
+	default:
+		// No action needed
+		break;
 	}
 }
 
@@ -689,32 +769,32 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			for (std::string ingred : recipe->entrees) {
 				display_text += ingred + ", ";
 			}
-			textRenderer.render_text(display_text, (float)0, (float)windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
+			textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.5f, glm::vec3(0.0f));
 		}
 
 		// player active recipe
-		textRenderer.render_text("inventory:", windowW - 160.0f, windowH - 40.0f, 0.5f, glm::vec3(1.0f));
-		cnt = 3;
-		for (std::string ingred : player.active_recipe.sides) {
-			textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
-			cnt++;
-		}
-		for (std::string ingred : player.active_recipe.entrees) {
-			textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
-			cnt++;
-		}
+		// textRenderer.render_text("inventory:", windowW - 160.0f, windowH - 40.0f, 0.5f, glm::vec3(1.0f));
+		// cnt = 3;
+		// for (std::string ingred : player.active_recipe.sides) {
+		// 	textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
+		// 	cnt++;
+		// }
+		// for (std::string ingred : player.active_recipe.entrees) {
+		// 	textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
+		// 	cnt++;
+		// }
 	}
 	// Draw score
 	{
 		std::string score_text = "Score: " + std::to_string(player.score);
-		textRenderer.render_text(score_text, windowW - 240.0f, 40.0f, 1.0f, glm::vec3(1.0f));
+		textRenderer.render_text(score_text, windowW - 240.0f, 40.0f, 1.0f, glm::vec3(0.0f));
 	}
 	// Update player recipe textures
 	{
 		GLuint side_tex_id, entree_tex_id, entree_right_tex_id, entree_left_tex_id;
 		switch (player.active_recipe.sides.size()) {
 		case 0:
-			// Shouldn't even be in view.
+			styrofoam_side->pipeline.textures[0].texture = *empty_tex;
 			break;
 		case 1:
 			side_tex_id = ingredient_to_tex[player.active_recipe.sides[0]];
@@ -726,9 +806,11 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 
 		switch (player.active_recipe.entrees.size()) {
 		case 0:
-			// Shouldn't even be in view.
+			styrofoam_entree_right->pipeline.textures[0].texture = *empty_tex;
+			styrofoam_entree_left->pipeline.textures[0].texture = *empty_tex;
 			break;
 		case 1:
+			styrofoam_entree_left->pipeline.textures[0].texture = *empty_tex;
 			entree_tex_id = ingredient_to_tex[player.active_recipe.entrees[0]];
 			styrofoam_entree_right->pipeline.textures[0].texture = entree_tex_id;
 			break;

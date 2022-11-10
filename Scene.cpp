@@ -77,15 +77,6 @@ Scene::ClickableLocation::ClickableLocation(Scene::Transform *transform_, glm::v
 		bool update_z_) :
 			transform(transform_), min(min_), max(max_), update_z(update_z_) {}
 
-void Scene::ClickableLocation::on_click(Scene::Transform *to_move) {
-	std::printf("Clicked on %s\n", transform->name.c_str());
-	to_move->position.x = transform->position.x;
-	to_move->position.y = transform->position.y;
-	if (update_z)
-		to_move->position.z = transform->position.z;
-	// add rotating?
-}
-
 //-------------------------
 
 glm::mat4 Scene::Camera::make_projection() const {

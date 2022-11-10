@@ -59,6 +59,7 @@ struct PlayMode : Mode {
 	RecipeQueueSystem recipe_system;
 	void try_submit_recipe(Recipe recipe);
 	void handle_click(SDL_Event evt);
+	void on_click_location(Scene::ClickableLocation *clickableLocation, Scene::Transform *to_move);
 	glm::vec3 ray_point_from_screen(int x, int y, GLfloat depth);
 	Scene::ClickableLocation *trace_ray(glm::vec3 position, glm::vec3 ray);
 	bool bbox_intersect(glm::vec3 pos, glm::vec3 dir, glm::vec3 min, glm::vec3 max);

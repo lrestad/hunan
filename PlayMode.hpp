@@ -50,8 +50,6 @@ struct PlayMode : Mode {
 		float action_time_left = 0.0f;
 		// Player's score.
 		int score = 0;
-		// Player's styrofoam container.
-		Scene::Drawable *inventory_drawable = nullptr;
 
 		// Methods
 
@@ -70,10 +68,9 @@ struct PlayMode : Mode {
 	int windowH;
 	TextRenderer textRenderer;
 
-	// TEXTURE IDs
-	GLuint rice_tex_id;
-	GLuint noodles_tex_id;
-	GLuint chicken_tex_id;
-	GLuint dumplings_tex_id;
-	GLuint vegetables_tex_id;
+	// Player's styrofoam container.
+	Scene::Drawable *styrofoam_base = nullptr;
+	Scene::Drawable *styrofoam_side = nullptr;
+	Scene::Drawable *styrofoam_entree_right = nullptr;
+	Scene::Drawable *styrofoam_entree_left = nullptr;
 };

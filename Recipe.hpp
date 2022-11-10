@@ -22,11 +22,6 @@ struct Recipe {
 	void TryAddSide(std::string side);
 	void TryAddEntree(std::string entree);
 	bool is_match(Recipe* _recipe); //check if the ingredients of two recipes match
-	// Eventually we'll need to provide more info such as the names of the
-	// children so that we can find them and texture them
-	static std::string mesh_name_from_recipe(const Recipe &recipe);
-
-	static const std::string inventory_meshname_map[2][3];
 };
 
 struct RecipeQueueSystem{

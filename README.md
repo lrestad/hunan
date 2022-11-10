@@ -34,5 +34,15 @@ Dumpling models from [https://www.turbosquid.com/3d-models/3d-dumpling-1923633](
 
 Rice texture from [https://www.pexels.com/photo/rice-in-close-up-photography-4187621/](https://www.pexels.com/photo/rice-in-close-up-photography-4187621/)
 
+Noodles texture from [Photo by Polina Tankilevitch: https://www.pexels.com/photo/close-up-photo-of-uncooked-noodles-4518664/](https://www.pexels.com/photo/close-up-photo-of-uncooked-noodles-4518664/)
+
+Chicken texture from [https://unsplash.com/photos/UC0HZdUitWY](https://unsplash.com/photos/UC0HZdUitWY)
+
+Vegetables texture from [Photo by Karolina Grabowska: https://www.pexels.com/photo/bowl-of-fresh-vegetable-salad-on-table-4198015/](https://www.pexels.com/photo/bowl-of-fresh-vegetable-salad-on-table-4198015/)
+
+Dumplings texture from [Photo by Anna Tarazevich: https://www.pexels.com/photo/crispy-dumplings-on-a-ceramic-plate-7287714/](https://www.pexels.com/photo/crispy-dumplings-on-a-ceramic-plate-7287714/)
+
+Texture loading code from [https://github.com/ixchow/15-466-f18-base3/blob/586f23cf0bbaf80e8e70277442c4e0de7e7612f5/GameMode.cpp#L95-L113](https://github.com/ixchow/15-466-f18-base3/blob/586f23cf0bbaf80e8e70277442c4e0de7e7612f5/GameMode.cpp#L95-L113)
+
 This game was built with [NEST](NEST.md).
 

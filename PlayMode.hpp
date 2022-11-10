@@ -55,7 +55,15 @@ struct PlayMode : Mode {
 
 		// Constants
 	} player;
-
+	struct GameStat {
+		unsigned long target_time = 3000;
+		unsigned long curr_time_elapsed = 0;
+		unsigned int target_order = 10;
+		unsigned int curr_order = 0;
+		float curr_score = 0.0f;
+		float satisfac = 5.0f; //customer satisfaction 
+		bool game_over;
+	}game_stat;
 	RecipeQueueSystem recipe_system;
 	void try_submit_recipe(Recipe recipe);
 	void handle_click(SDL_Event evt);

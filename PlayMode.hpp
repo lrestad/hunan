@@ -69,4 +69,11 @@ struct PlayMode : Mode {
 	int windowW;
 	int windowH;
 	TextRenderer textRenderer;
+
+	// TEXTURE IDs
+	GLuint rice_tex_id;
+	GLuint noodles_tex_id;
+	GLuint chicken_tex_id;
+	GLuint dumplings_tex_id;
+	GLuint vegetables_tex_id;
 };

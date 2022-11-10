@@ -1,6 +1,7 @@
 #include "PlayMode.hpp"
 
 #include "LitColorTextureProgram.hpp"
+#include "load_save_png.hpp"
 
 #include "DrawLines.hpp"
 #include "Mesh.hpp"
@@ -24,11 +25,35 @@ Load< MeshBuffer > counter_meshes(LoadTagDefault, []() -> MeshBuffer const * {
 });
 
 Load< Scene > counter_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("counter-level.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	// Load rice texture
+	glm::uvec2 face_tex_size;
+	std::vector< glm::u8vec4 > face_tex_data;
+	load_png(data_path("rice-texture.png"), 
+			&face_tex_size, &face_tex_data, OriginLocation::UpperLeftOrigin);
+	GLuint tex;
+	glGenTextures(1, &tex);
+
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, face_tex_size.x, face_tex_size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, face_tex_data.data());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	Scene *new_scene = new Scene(data_path("counter-level.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = counter_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
 		Scene::Drawable &drawable = scene.drawables.back();
+
+		drawable.pipeline = lit_color_texture_program_pipeline;
+
+		drawable.pipeline.vao = counter_meshes_for_lit_color_texture_program;
+		drawable.pipeline.type = mesh.type;
+		drawable.pipeline.start = mesh.start;
+		drawable.pipeline.count = mesh.count;
+
 		// std::printf("mesh_name: %s\n", mesh_name.c_str());
 		if (mesh_name.find("Clickable") != std::string::npos) {
 			// Scene::Clickable clickable(transform, mesh.min, mesh.max,);
@@ -39,16 +64,18 @@ Load< Scene > counter_scene(LoadTagDefault, []() -> Scene const * {
 			std::cout << "Adding styrofoam " << mesh_name << std::endl;
 			scene.mesh_name_to_drawables_idx[mesh_name] = 
 				scene.drawables.size() - 1;
+
+			// drawable.pipeline.textures[0].texture = tex;
+			// drawable.pipeline.textures[0].target = GL_TEXTURE_2D;
 		}
+		if (mesh_name.find("Styrofoam.Entree.Right.007") != std::string::npos) {
 
-		drawable.pipeline = lit_color_texture_program_pipeline;
-
-		drawable.pipeline.vao = counter_meshes_for_lit_color_texture_program;
-		drawable.pipeline.type = mesh.type;
-		drawable.pipeline.start = mesh.start;
-		drawable.pipeline.count = mesh.count;
-
+			drawable.pipeline.textures[0].texture = tex;
+			// drawable.pipeline.textures[0].target = GL_TEXTURE_2D;
+		}
 	});
+
+	return new_scene;
 });
 
 WalkMesh const *walkmesh = nullptr;

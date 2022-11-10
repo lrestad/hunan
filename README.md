@@ -32,5 +32,7 @@ Clicking and object collision used from team PewPew, oritinally adapted from 15-
 
 Dumpling models from [https://www.turbosquid.com/3d-models/3d-dumpling-1923633](https://www.turbosquid.com/3d-models/3d-dumpling-1923633)
 
+Rice texture from [https://www.pexels.com/photo/rice-in-close-up-photography-4187621/](https://www.pexels.com/photo/rice-in-close-up-photography-4187621/)
+
 This game was built with [NEST](NEST.md).
 

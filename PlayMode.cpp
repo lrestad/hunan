@@ -201,7 +201,15 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 	}
 	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
 		recipe_system.recipe_queue.pop_front();
+		game_stat.satisfac += 0.1f;
+		game_stat.satisfac = std::min(game_stat.satisfac, 5.0f);
 		player.score++;
+	}
+	else {
+		std::cerr << "Recipe does not match!" <<  std::endl;
+		game_stat.satisfac -= 0.5f;
+		game_stat.satisfac = std::max(game_stat.satisfac, 0.0f);
+		return;
 	}
 	// always delete recipe? not sure if we want that so add warning for now
 	std::cout << "Player turned in recipe, removing from inventory." << std::endl;
@@ -287,14 +295,18 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	if (end_game) {
 		return false;
 	}
-
+	if (game_stat.satisfac <= 0) {
+		return false;
+	}
 	windowW = window_size.x;
 	windowH = window_size.y;
 	if (evt.type == SDL_KEYDOWN) {
+		
 		if (evt.key.keysym.sym == SDLK_ESCAPE) {
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_a) {
+			
 			left.downs += 1;
 			left.pressed = true;
 			return true;
@@ -323,6 +335,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			p_button.pressed = true;
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+
 			recipe_system.recipe_queue.pop_front();
 			return true;
 		}
@@ -408,7 +421,9 @@ void PlayMode::handle_click(SDL_Event evt) {
 
 void PlayMode::update(float elapsed) {
 	//access the recipe queue
-
+	if (game_stat.satisfac <= 0) {
+		return;
+	}
 	
 	//player walking:
 	{
@@ -513,7 +528,6 @@ void PlayMode::update(float elapsed) {
 		player.inventory_drawable->transform->position = inventory_start_pos;
 		player.inventory_drawable->transform->rotation = inventory_rot;
 	}
-
 	// debug stuff
 	if (r.pressed && r.downs == 1) {
 		player.active_recipe.TryAddSide("rice");
@@ -521,7 +535,7 @@ void PlayMode::update(float elapsed) {
 	if (c_button.pressed && c_button.downs == 1) {
 		player.active_recipe.TryAddEntree("chicken");
 	}
-	if (p_button.pressed) {
+	if (p_button.pressed && p_button.downs == 1) {
 		try_submit_recipe(player.active_recipe);
 	}
 
@@ -533,6 +547,13 @@ void PlayMode::update(float elapsed) {
 	r.downs = 0;
 	c_button.downs = 0;
 	p_button.downs = 0;
+}
+
+std::string float_to_string(float f, size_t precision) {
+	char buffer[20];
+	std::snprintf(buffer, 20, "%.1f", f);
+	std::string str(buffer);
+	return str;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
@@ -618,10 +639,20 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			cnt++;
 		}
 	}
+	// Draw satisfacation
+	{
+		std::string satf_text = "Customer Satisfaction: " + float_to_string(game_stat.satisfac, 1);
+		textRenderer.render_text(satf_text, 20.0f, 40.0f, .7f, glm::vec3(1.0f));
+	}
 	// Draw score
 	{
 		std::string score_text = "Score: " + std::to_string(player.score);
 		textRenderer.render_text(score_text, windowW - 240.0f, 40.0f, 1.0f, glm::vec3(1.0f));
+	}
+	if (game_stat.satisfac <= 0) {
+		std::string end_text = "GAME OVER";
+		textRenderer.render_text(end_text, windowW / 2 - 240.0f, windowH /2 - .0f, 2.0f, glm::vec3(.8f, .2f, .2f));
+		return;
 	}
 	GL_ERRORS();
 }

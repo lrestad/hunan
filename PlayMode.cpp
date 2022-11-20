@@ -334,12 +334,6 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 		Sound::play(*incorrect_sample, 0.8f, 0.0f);
 		return;
 	}
-	else {
-		std::cerr << "Recipe does not match!" <<  std::endl;
-		game_stat.satisfac -= 0.5f;
-		game_stat.satisfac = std::max(game_stat.satisfac, 0.0f);
-		return;
-	}
 	// always delete recipe? not sure if we want that so add warning for now
 	std::cout << "Player turned in recipe, removing from inventory." << std::endl;
 	player.active_recipe = Recipe(1, 2);

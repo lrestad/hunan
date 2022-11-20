@@ -322,6 +322,8 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 	}
 	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
 		recipe_system.recipe_queue.pop_front();
+		game_stat.satisfac += 0.1f;
+		game_stat.satisfac = std::min(game_stat.satisfac, 5.0f);
 		player.score++;
 		Sound::play(*cha_ching_sample, 0.8f, 0.0f);
 	}
@@ -330,6 +332,12 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 		game_stat.satisfac -= 0.5f;
 		game_stat.satisfac = std::max(game_stat.satisfac, 0.0f);
 		Sound::play(*incorrect_sample, 0.8f, 0.0f);
+		return;
+	}
+	else {
+		std::cerr << "Recipe does not match!" <<  std::endl;
+		game_stat.satisfac -= 0.5f;
+		game_stat.satisfac = std::max(game_stat.satisfac, 0.0f);
 		return;
 	}
 	// always delete recipe? not sure if we want that so add warning for now
@@ -416,14 +424,18 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	if (end_game) {
 		return false;
 	}
-
+	if (game_stat.satisfac <= 0) {
+		return false;
+	}
 	windowW = window_size.x;
 	windowH = window_size.y;
 	if (evt.type == SDL_KEYDOWN) {
+		
 		if (evt.key.keysym.sym == SDLK_ESCAPE) {
 			SDL_SetRelativeMouseMode(SDL_FALSE);
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_a) {
+			
 			left.downs += 1;
 			left.pressed = true;
 			return true;
@@ -452,6 +464,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			p_button.pressed = true;
 			return true;
 		} else if (evt.key.keysym.sym == SDLK_SPACE) {
+
 			recipe_system.recipe_queue.pop_front();
 			return true;
 		}
@@ -576,7 +589,9 @@ void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Sc
 
 void PlayMode::update(float elapsed) {
 	//access the recipe queue
-
+	if (game_stat.satisfac <= 0) {
+		return;
+	}
 	
 	//player walking:
 	{
@@ -704,7 +719,7 @@ void PlayMode::update(float elapsed) {
 	if (c_button.pressed && c_button.downs == 1) {
 		player.active_recipe.TryAddEntree("veggies");
 	}
-	if (p_button.pressed) {
+	if (p_button.pressed && p_button.downs == 1) {
 		try_submit_recipe(player.active_recipe);
 	}
 
@@ -716,6 +731,13 @@ void PlayMode::update(float elapsed) {
 	r.downs = 0;
 	c_button.downs = 0;
 	p_button.downs = 0;
+}
+
+std::string float_to_string(float f, size_t precision) {
+	char buffer[20];
+	std::snprintf(buffer, 20, "%.1f", f);
+	std::string str(buffer);
+	return str;
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
@@ -801,11 +823,16 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		// 	cnt++;
 		// }
 	}
-	// Draw score
+	// Draw satisfacation
 	{
-		std::string score_text = "Score: " + std::to_string(player.score);
-		textRenderer.render_text(score_text, windowW - 240.0f, 40.0f, 1.0f, glm::vec3(0.0f));
+		std::string satf_text = "Customer Satisfaction: " + float_to_string(game_stat.satisfac, 1);
+		textRenderer.render_text(satf_text, 20.0f, 40.0f, .7f, glm::vec3(0.0f));
 	}
+	// Draw score
+	// {
+	// 	std::string score_text = "Score: " + std::to_string(player.score);
+	// 	textRenderer.render_text(score_text, windowW - 240.0f, 40.0f, 1.0f, glm::vec3(0.0f));
+	// }
 	// Update player recipe textures
 	{
 		GLuint side_tex_id, entree_tex_id, entree_right_tex_id, entree_left_tex_id;
@@ -840,6 +867,11 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		default:
 			std::cout << "Invalid active recipe entrees size: " << player.active_recipe.entrees.size() << "\n";
 		}
+	}
+	if (game_stat.satisfac <= 0) {
+		std::string end_text = "GAME OVER";
+		textRenderer.render_text(end_text, windowW / 2 - 240.0f, windowH /2 - .0f, 2.0f, glm::vec3(.8f, .2f, .2f));
+		return;
 	}
 	GL_ERRORS();
 }

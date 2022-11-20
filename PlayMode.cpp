@@ -8,6 +8,7 @@
 #include "Load.hpp"
 #include "gl_errors.hpp"
 #include "data_path.hpp"
+#include "Sound.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -84,6 +85,14 @@ Load< GLuint > dumplings_tex(LoadTagDefault, [](){
 
 Load< GLuint > cash_register_tex(LoadTagDefault, [](){
 	return new GLuint(load_texture(data_path("textures/CashRegister.png")));
+});
+
+Load< Sound::Sample > cha_ching_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/cha-ching.wav"));
+});
+
+Load< Sound::Sample > incorrect_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/incorrect.wav"));
 });
 
 std::map< std::string, GLuint > ingredient_to_tex;
@@ -314,6 +323,14 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
 		recipe_system.recipe_queue.pop_front();
 		player.score++;
+		Sound::play(*cha_ching_sample, 0.8f, 0.0f);
+	}
+	else {
+		std::cerr << "Recipe does not match!" <<  std::endl;
+		game_stat.satisfac -= 0.5f;
+		game_stat.satisfac = std::max(game_stat.satisfac, 0.0f);
+		Sound::play(*incorrect_sample, 0.8f, 0.0f);
+		return;
 	}
 	// always delete recipe? not sure if we want that so add warning for now
 	std::cout << "Player turned in recipe, removing from inventory." << std::endl;

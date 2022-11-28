@@ -61,7 +61,7 @@ struct Scene {
 			//attributes:
 			GLuint vao = 0; //attrib->buffer mapping; passed to glBindVertexArray
 
-			GLenum type = GL_TRIANGLES; //what sort of primitive to draw; passed to glDrawArrays
+			GLenum type = GL_TRIANGLES;  //what sort of primitive to draw; passed to glDrawArrays
 			GLuint start = 0; //first vertex to draw; passed to glDrawArrays
 			GLuint count = 0; //number of vertices to draw; passed to glDrawArrays
 
@@ -79,6 +79,24 @@ struct Scene {
 				GLenum target = GL_TEXTURE_2D;
 			} textures[TextureCount];
 		} pipeline;
+	};
+
+	struct ClickableLocation {
+		ClickableLocation(Scene::Transform *transform_, glm::vec3 min_, glm::vec3 max_,
+		bool update_z_);
+		~ClickableLocation() {};
+
+		Scene::Transform *transform;
+		// Scene::Drawable *drawable;
+
+		// Min and max for bbox
+		glm::vec3 min;
+		glm::vec3 max;
+
+		// should z value update when moving?
+		bool update_z;
+		// rotation to set/interpolate to after moving here
+		glm::quat moverot;
 	};
 
 	struct Camera {
@@ -119,8 +137,10 @@ struct Scene {
 	//Scenes, of course, may have many of the above objects:
 	std::list< Transform > transforms;
 	std::list< Drawable > drawables;
+	std::list< ClickableLocation > clickableLocations;
 	std::list< Camera > cameras;
 	std::list< Light > lights;
+	std::unordered_map< std::string, int > mesh_name_to_drawables_idx;
 
 	//The "draw" function provides a convenient way to pass all the things in a scene to OpenGL:
 	void draw(Camera const &camera) const;

@@ -287,7 +287,6 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 	//start player walking at nearest walk point:
 	// player.at = walkmesh->nearest_walk_point(player.transform->position);
 
-	recipe_system.start(1500);
 
 	textRenderer = TextRenderer("Roboto-Regular.ttf");
 }
@@ -296,12 +295,12 @@ PlayMode::~PlayMode() {
 }
 
 void PlayMode::try_submit_recipe(Recipe recipe) {
-	if (recipe_system.recipe_queue.empty()) {
+	if (recipe_queue_system.recipe_queue.empty()) {
 		return;
 	}
-	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
+	if (recipe_queue_system.recipe_queue.front()->is_match(&recipe)) {
 
-		recipe_system.recipe_queue.pop_front();
+		recipe_queue_system.recipe_queue.pop_front();
 		game_stat.satisfac += 0.1f;
 		game_stat.satisfac = std::min(game_stat.satisfac, 5.0f);
 		player.score++;
@@ -317,7 +316,7 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 	}
 	// always delete recipe? not sure if we want that so add warning for now
 	std::cout << "Player turned in recipe, removing from inventory." << std::endl;
-	player.active_recipe = Recipe(1, 2);
+	player.active_recipe = Recipe();
 }
 
 // Original implementation was to get world space coord from screen coord. Now
@@ -406,7 +405,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	windowH = window_size.y;
 	if (evt.type == SDL_KEYDOWN) {
 		if (evt.key.keysym.sym == SDLK_SPACE) {
-			recipe_system.recipe_queue.pop_front();
+			recipe_queue_system.recipe_queue.pop_front();
 			return true;
 		}
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
@@ -469,7 +468,7 @@ void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Sc
 		player.active_recipe.TryAddEntree("chicken");
 		break;
 	case dumpling:
-		player.active_recipe.TryAddEntree("dumpling");
+		player.active_recipe.TryAddSide("dumpling");
 		break;
 	case veggies:
 		player.active_recipe.TryAddEntree("veggies");
@@ -478,7 +477,7 @@ void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Sc
 		try_submit_recipe(player.active_recipe);
 		break;
 	case styrofoam:
-		player.active_recipe = Recipe(1, 2);
+		player.active_recipe = Recipe();
 		break;
 	default:
 		// No action needed
@@ -487,11 +486,20 @@ void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Sc
 }
 
 void PlayMode::update(float elapsed) {
+
+	// If not currently playing, ignore time
+	//! TODO: make each instruction screen its own mode
 	if (!game_stat.playing) {
 		return;
 	}
 
-	//access the recipe queue
+	// Update satisfaction
+	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
+		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.001;
+	}
+
+	// If satisfaction is too low, end game
+	//! TODO: make 'game over' its own mode
 	if (game_stat.satisfac <= 0) {
 		if (game_stat.curr_lvl < 3) {
 			std::printf("game over, stars: %d", game_stat.curr_lvl);
@@ -501,38 +509,30 @@ void PlayMode::update(float elapsed) {
 		return;
 	}
 
-	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
-		game_stat.satisfac -= recipe_system.recipe_queue.size() * 0.001;
+	// If finished with level 1, move to level 2 and reset stats
+	if (game_stat.curr_lvl == 1 && game_stat.num_helped >= 15) {
+		game_stat.curr_lvl = 2;
+		game_stat.curr_time_elapsed = 0;
+		game_stat.num_helped = 0;
+		game_stat.playing = false;
+		game_stat.satisfac = 5.0f;
+		//! TODO: clear order queue
+
+	// If finished with level 2, move to level 3 and reset stats
+	} else if (game_stat.curr_lvl == 2 && game_stat.num_helped >= 20) {
+		game_stat.curr_lvl = 3;
+		game_stat.curr_time_elapsed = 0;
+		game_stat.num_helped = 0;
+		game_stat.playing = false;
+		game_stat.satisfac = 5.0f;
+		//! TODO: clear order queue
 	}
 
-	// Only make updates if currently playing
-	if (game_stat.playing) {
+	// Update order queue
+	recipe_queue_system.generate_order((unsigned int)game_stat.curr_lvl, (unsigned int)game_stat.curr_time_elapsed, (unsigned int)elapsed);
 
-		// Update time elapsed
-		game_stat.curr_time_elapsed += elapsed;
-
-		// Check if advance to nect level
-		if ((game_stat.curr_lvl == 1 && game_stat.num_helped >= 15)) {
-			// Finished level 1, move to level 2 and reset stats
-			game_stat.curr_lvl = 2;
-			game_stat.curr_time_elapsed = 0;
-			game_stat.num_helped = 0;
-			game_stat.playing = false;
-			game_stat.satisfac = 5.0f;
-			//! TODO: clear order queue
-			//! TODO: edit recipe generator to include more than j chick and rice
-
-		} else if (game_stat.curr_lvl == 2 && game_stat.num_helped >= 20) {
-			// Finished level 2, move to level 3 and reset stats
-			game_stat.curr_lvl = 3;
-			game_stat.curr_time_elapsed = 0;
-			game_stat.num_helped = 0;
-			game_stat.playing = false;
-			game_stat.satisfac = 5.0f;
-			//! TODO: clear order queue
-			//! TODO: edit recipe generator to include some illegal orders
-		}
-	}
+	// Update level total time
+	game_stat.curr_time_elapsed += elapsed;
 }
 
 std::string float_to_string(float f, size_t precision) {
@@ -565,7 +565,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			textRenderer.render_text(lvl_1_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 			std::string lvl_1_instructions_0 = "Every order will be a valid order with:";
-			std::string lvl_1_instructions_1 = "    1 Entre - Chicken";
+			std::string lvl_1_instructions_1 = "    1 Entree - Chicken";
 			std::string lvl_1_instructions_2 = "    0-2 Sides - Rice";
 			textRenderer.render_text(lvl_1_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_1_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -575,7 +575,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			textRenderer.render_text(lvl_2_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 			std::string lvl_2_instructions_0 = "Every order will be a valid order with:";
-			std::string lvl_2_instructions_1 = "    1 Entre - Chicken, Dupling, Veggies";
+			std::string lvl_2_instructions_1 = "    1 Entree - Chicken, Dupling, Veggies";
 			std::string lvl_2_instructions_2 = "    0-2 Sides - Rice, Noodles";
 			textRenderer.render_text(lvl_2_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_2_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -585,7 +585,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			textRenderer.render_text(lvl_3_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 			std::string lvl_3_instructions_0 = "Valid orders should have:";
-			std::string lvl_3_instructions_1 = "    1 Entre - Chicken, Dupling, Veggies";
+			std::string lvl_3_instructions_1 = "    1 Entree - Chicken, Dupling, Veggies";
 			std::string lvl_3_instructions_2 = "    0-2 Sides - Rice, Noodles";
 			std::string lvl_3_instructions_3 = "Invalid orders should recieve empty trays.";
 			textRenderer.render_text(lvl_3_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -625,24 +625,12 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 1.0f
 		));
-
-		constexpr float H = 0.09f;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
-			glm::vec3(-aspect + 0.1f * H, -1.0 + 0.1f * H, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0x00, 0x00, 0x00, 0x00));
-		float ofs = 2.0f / drawable_size.y;
-		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
-			glm::vec3(-aspect + 0.1f * H + ofs, -1.0 + + 0.1f * H + ofs, 0.0),
-			glm::vec3(H, 0.0f, 0.0f), glm::vec3(0.0f, H, 0.0f),
-			glm::u8vec4(0xff, 0xff, 0xff, 0x00));
 	}
 	// Print recipes
 	{
 		// recipes to complete
-		std::unique_lock<std::mutex>q_lock(recipe_system.q_mtx);
 		int cnt = 1;
-		for (Recipe* recipe : recipe_system.recipe_queue) {
+		for (Recipe* recipe : recipe_queue_system.recipe_queue) {
 			std::string display_text = "Recipe " + std::to_string(cnt++) + ": ";
 
 			for (std::string ingred : recipe->sides) {

@@ -1,73 +1,124 @@
 #include "Recipe.hpp"
 #include <algorithm>
 #include <random>
-#include <iostream>
-#include <chrono>
 
-RecipeInfo::RecipeInfo() {}
-RecipeInfo::RecipeInfo(RecipeInfo * recipe_info) {}
-Recipe::Recipe(size_t _max_sides, size_t _max_entrees) :
-	max_sides(_max_sides), max_entrees(_max_entrees) {}
-Recipe::Recipe(
-	std::vector<std::string>_sides, std::vector<std::string>_entrees, RecipeInfo* _recipe_info,
-		size_t _max_sides, size_t _max_entrees)
-{
-	sides = std::vector<std::string>(_sides.begin(), _sides.end());
+Recipe::Recipe() {}
+
+Recipe::Recipe(std::vector<std::string> _entrees, std::vector<std::string> _sides, bool _valid) {
 	entrees = std::vector<std::string>(_entrees.begin(), _entrees.end());
-	recipe_info = new RecipeInfo(_recipe_info);
-	max_sides = _max_sides;
-	max_entrees = _max_entrees;
+	sides = std::vector<std::string>(_sides.begin(), _sides.end());
+	valid = _valid;
 }
+
 bool Recipe::is_match(Recipe* _recipe) {
 	std::vector<std::string> entrees1 = entrees;
-	std::vector<std::string> entrees2 = _recipe -> entrees;
+	std::vector<std::string> entrees2 = _recipe->entrees;
 	std::sort(entrees1.begin(), entrees1.end());
 	std::sort(entrees2.begin(), entrees2.end());
+
 	std::vector<std::string> sides1 = sides;
-	std::vector<std::string> sides2 = _recipe -> sides;
+	std::vector<std::string> sides2 = _recipe->sides;
 	std::sort(sides1.begin(), sides1.end());
 	std::sort(sides2.begin(), sides2.end());
+
 	return sides1 == sides2 && entrees1 == entrees2;
 }
+
 void Recipe::TryAddSide(std::string side) {
-	if (sides.size() < max_sides)
+	if (sides.size() < 2)
 		sides.push_back(side);
 }
+
 void Recipe::TryAddEntree(std::string entree) {
-	if (entrees.size() < max_entrees)
+	if (entrees.size() < 1)
 		entrees.push_back(entree);
 }
-void RecipeQueueSystem::init(){}
-void RecipeQueueSystem::start(long interval){
-	std::cerr << "Recipe queue system started" << std::endl;
-	auto loop_func = [=]() {
-		while (!q_signal){
-			if (recipe_queue.size() >= max_queue_size) continue;
-			Recipe* recipe = generate_recipe();
-			{
-				std::unique_lock<std::mutex> q_lock(q_mtx);
-				recipe_queue.push_back(recipe);
-				std::cerr << "Creating new Recipe" << std::endl;
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(interval));
-		}
-	};
-	std::cerr << "lambda defined" << std::endl;
-	std::thread t(loop_func);
-	t.detach();
-}
-Recipe * RecipeQueueSystem::generate_recipe() {
-	//hardcode for now
-	int num_entrees = rand() % 2 + 1;
-	std::vector<std::string> sides;
-	std::vector<std::string> entrees;
-	int ingred_idx = rand() % possible_sides.size();
-	sides.push_back(possible_sides[ingred_idx]);
-	for (int i = 0; i < num_entrees; ++i) {
-		ingred_idx = rand() % possible_entrees.size();
-		entrees.push_back(possible_entrees[ingred_idx]);
+
+void RecipeQueueSystem::generate_order(unsigned int level, unsigned int total_time, unsigned int elapsed) {
+
+	std::printf("generating order %lu \n", recipe_queue.size());
+
+	// Do not add a new order
+	/*if ((recipe_queue.size() >= 5) || (total_time / 5000 == (total_time + elapsed) / 5000)) {
+		return;
+	}*/
+
+	unsigned int valid_recipe;
+	unsigned int num_sides;
+	unsigned int entre_idx;
+	unsigned int side_idx;
+
+	// Do not let the queue get too long
+	if (recipe_queue.size() >= 5) {
+		return;
 	}
-	RecipeInfo recipe_info; 
-	Recipe* recipe = new Recipe(sides, entrees, &recipe_info, 100, 100);
-	return recipe;
+
+	// Generate an order
+	std::vector<std::string> entrees;
+	std::vector<std::string> sides;
+	switch (level) {
+		// Level one: only valid orders with chicken and rice
+		case 1:
+			// Add exactly 1 entre
+			entrees.push_back("chicken");
+				
+			// Add 0-2 sides
+			num_sides = rand() % 3;
+			for (int i = 0; i < num_sides; i++) {
+				sides.push_back("rice");
+			}
+
+			recipe_queue.push_back(new Recipe(entrees, sides, true));
+			return;
+
+		// Level 3: can have invalid orders, uses all ingredients
+		case 3:
+			valid_recipe = rand() % 4;
+			if (valid_recipe == 0) {
+				// Add 0 entres
+					
+				// Add 1-3 sides
+				num_sides = rand() % 3 + 1;
+				for (int i = 0; i < num_sides; i++) {
+					side_idx = rand() % allowed_sides.size();
+					sides.push_back(allowed_sides[side_idx]);
+				}
+
+				recipe_queue.push_back(new Recipe(entrees, sides, false));
+				return;
+
+			} else if (valid_recipe == 1) {
+				// Add 2 entres
+				for (int i = 0; i < 2; i++) {
+					entre_idx = rand() % allowed_entrees.size();
+					entrees.push_back(allowed_entrees[entre_idx]);
+				}
+					
+				// Add 0-1 sides
+				num_sides = rand() % 2;
+				for (int i = 0; i < num_sides; i++) {
+					side_idx = rand() % allowed_sides.size();
+					sides.push_back(allowed_sides[side_idx]);
+				}
+
+				recipe_queue.push_back(new Recipe(entrees, sides, false));
+				return;
+			}
+
+		// Level 2 (and the valid half of Level 3): uses all ingredients
+		default:
+			// Add exactly 1 entre
+			entre_idx = rand() % allowed_entrees.size();
+			entrees.push_back(allowed_entrees[entre_idx]);
+				
+			// Add 0-2 sides
+			num_sides = rand() % 3;
+			for (int i = 0; i < num_sides; i++) {
+				side_idx = rand() % allowed_sides.size();
+				sides.push_back(allowed_sides[side_idx]);
+			}
+
+			recipe_queue.push_back(new Recipe(entrees, sides, true));
+			return;
+	}
 }

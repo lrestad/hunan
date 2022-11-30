@@ -287,7 +287,7 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 	//start player walking at nearest walk point:
 	// player.at = walkmesh->nearest_walk_point(player.transform->position);
 
-	recipe_system.start(1500);
+	recipe_system.start(3000);
 
 	textRenderer = TextRenderer("Roboto-Regular.ttf");
 }
@@ -299,11 +299,16 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 	if (recipe_system.recipe_queue.empty()) {
 		return;
 	}
-	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
-		recipe_system.recipe_queue.pop_front();
-		game_stat.satisfac += 0.1f;
-		game_stat.satisfac = std::min(game_stat.satisfac, 5.0f);
-		player.score++;
+	Recipe* first_recipe = recipe_system.recipe_queue.front();
+	if (first_recipe->is_match(&recipe)) {
+		float cs = first_recipe->calc_cs();
+		if(cs < 0) game_stat.satisfac -= 0.2f;
+		else {
+			recipe_system.recipe_queue.pop_front();
+			game_stat.satisfac += cs;
+			game_stat.satisfac = std::min(game_stat.satisfac, 5.0f);
+			player.score++;
+		}
 		Sound::play(*cha_ching_sample, 0.8f, 0.0f);
 	}
 	else {

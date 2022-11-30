@@ -129,7 +129,7 @@ void MainMenuMode::draw(glm::uvec2 const &drawable_size) {
 	scene.draw(*camera);
 
     {
-		textRenderer.render_text("HUNAN", windowW / 4, 3 * windowH / 5, 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-        textRenderer.render_text("Click to play", 5 * windowW / 8, windowH / 2, 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
+		textRenderer.render_text("HUNAN", windowW / 4.0f, 3 * windowH / 5.0f, 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+        textRenderer.render_text("Click to play", 5 * windowW / 8.0f, windowH / 2.0f, 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 	}
 }

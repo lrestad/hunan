@@ -3,9 +3,15 @@
 #include <random>
 #include <iostream>
 #include <chrono>
+#include <cmath>
 
+static const time_t default_time = 20;
+static const float const_e = std::exp(1.0f);
 RecipeInfo::RecipeInfo() {}
-RecipeInfo::RecipeInfo(RecipeInfo * recipe_info) {}
+RecipeInfo::RecipeInfo(RecipeInfo * recipe_info) {
+	this->create_time = recipe_info->create_time;
+	this->expected_time = recipe_info->expected_time;
+}
 Recipe::Recipe(size_t _max_sides, size_t _max_entrees) :
 	max_sides(_max_sides), max_entrees(_max_entrees) {}
 Recipe::Recipe(
@@ -18,6 +24,19 @@ Recipe::Recipe(
 	max_sides = _max_sides;
 	max_entrees = _max_entrees;
 }
+
+float Recipe::calc_cs() {
+	time_t sec_passed = time(NULL) - recipe_info->create_time;
+	std::cout << "time passed: " + std::to_string((long)sec_passed) << std::endl;
+	int diff = (int)(default_time - sec_passed);
+	if (diff < 0) return -1.0f;
+	float base = ((float)sec_passed)/ ((float)default_time) * const_e;
+	float cs = std::min(0.5f, 0.2f * (- log(base) + 1));
+	cs = round(cs * 10) / 10;
+	std::cout << "cs change: " + std::to_string(cs) << std::endl;
+	return cs;
+}
+
 bool Recipe::is_match(Recipe* _recipe) {
 	std::vector<std::string> entrees1 = entrees;
 	std::vector<std::string> entrees2 = _recipe -> entrees;
@@ -68,6 +87,9 @@ Recipe * RecipeQueueSystem::generate_recipe() {
 		entrees.push_back(possible_entrees[ingred_idx]);
 	}
 	RecipeInfo recipe_info; 
+	recipe_info.create_time = time(NULL);
+	recipe_info.expected_time = default_time;
 	Recipe* recipe = new Recipe(sides, entrees, &recipe_info, 100, 100);
+	std::cout << "create time: " + std::to_string((int32_t)recipe->recipe_info->create_time) << std::endl;
 	return recipe;
 }

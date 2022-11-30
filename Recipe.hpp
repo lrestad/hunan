@@ -3,10 +3,11 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <time.h>
 struct RecipeInfo {
-	std::string create_time;
 	//customer info? score info? time limit?
-
+	time_t create_time;
+	time_t expected_time;
 	RecipeInfo();
 	RecipeInfo(RecipeInfo* recipe_info);
 };
@@ -21,6 +22,7 @@ struct Recipe {
 		size_t _max_sides = 1, size_t _max_entrees = 2);
 	void TryAddSide(std::string side);
 	void TryAddEntree(std::string entree);
+	float calc_cs();//calculate customer satisfaction
 	bool is_match(Recipe* _recipe); //check if the ingredients of two recipes match
 };
 

@@ -300,10 +300,12 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 		return;
 	}
 	if (recipe_system.recipe_queue.front()->is_match(&recipe)) {
+
 		recipe_system.recipe_queue.pop_front();
 		game_stat.satisfac += 0.1f;
 		game_stat.satisfac = std::min(game_stat.satisfac, 5.0f);
 		player.score++;
+		game_stat.num_helped++;
 		Sound::play(*cha_ching_sample, 0.8f, 0.0f);
 	}
 	else {
@@ -403,93 +405,17 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	windowW = window_size.x;
 	windowH = window_size.y;
 	if (evt.type == SDL_KEYDOWN) {
-		
-		if (evt.key.keysym.sym == SDLK_ESCAPE) {
-			SDL_SetRelativeMouseMode(SDL_FALSE);
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_a) {
-			
-			left.downs += 1;
-			left.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_d) {
-			right.downs += 1;
-			right.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_w) {
-			up.downs += 1;
-			up.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_s) {
-			down.downs += 1;
-			down.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_r) {
-			r.downs += 1;
-			r.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_c) {
-			c_button.downs += 1;
-			c_button.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_p) {
-			p_button.downs += 1;
-			p_button.pressed = true;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_SPACE) {
-
+		if (evt.key.keysym.sym == SDLK_SPACE) {
 			recipe_system.recipe_queue.pop_front();
 			return true;
 		}
-	} else if (evt.type == SDL_KEYUP) {
-		if (evt.key.keysym.sym == SDLK_a) {
-			left.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_d) {
-			right.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_w) {
-			up.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_s) {
-			down.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_r) {
-			r.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_c) {
-			c_button.pressed = false;
-			return true;
-		} else if (evt.key.keysym.sym == SDLK_p) {
-			p_button.pressed = false;
-			return true;
-		}
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
-		// if (SDL_GetRelativeMouseMode() == SDL_FALSE) {
-		// 	SDL_SetRelativeMouseMode(SDL_TRUE);
-		// 	return true;
-		// }
-		handle_click(evt);
+		if (!game_stat.playing) {
+			game_stat.playing = true;
+		} else {
+			handle_click(evt);
+		}
 	} 
-	// else if (evt.type == SDL_MOUSEMOTION) {
-	// 	if (SDL_GetRelativeMouseMode() == SDL_TRUE) {
-	// 		glm::vec2 motion = glm::vec2(
-	// 			evt.motion.xrel / float(window_size.y),
-	// 			-evt.motion.yrel / float(window_size.y)
-	// 		);
-	// 		glm::vec3 upDir = walkmesh->to_world_smooth_normal(player.at);
-	// 		player.transform->rotation = glm::angleAxis(-motion.x * camera->fovy, upDir) * player.transform->rotation;
-
-	// 		float pitch = glm::pitch(camera->transform->rotation);
-	// 		pitch += motion.y * camera->fovy;
-	// 		//camera looks down -z (basically at the player's feet) when pitch is at zero.
-	// 		pitch = std::min(pitch, 0.95f * 3.1415926f);
-	// 		pitch = std::max(pitch, 0.05f * 3.1415926f);
-	// 		camera->transform->rotation = glm::angleAxis(pitch, glm::vec3(1.0f, 0.0f, 0.0f));
-
-	// 		return true;
-	// 	}
-	// }
 
 	return false;
 }
@@ -561,149 +487,52 @@ void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Sc
 }
 
 void PlayMode::update(float elapsed) {
-	//access the recipe queue
-	if (game_stat.satisfac <= 0) {
+	if (!game_stat.playing) {
 		return;
 	}
-	
-	//player walking:
-	{
 
-	// 	//combine inputs into a move:
-	// 	constexpr float PlayerSpeed = 3.0f;
-	// 	glm::vec2 move = glm::vec2(0.0f);
-	// 	if (left.pressed && !right.pressed) move.x =-1.0f;
-	// 	if (!left.pressed && right.pressed) move.x = 1.0f;
-	// 	if (down.pressed && !up.pressed) move.y =-1.0f;
-	// 	if (!down.pressed && up.pressed) move.y = 1.0f;
-
-	// 	//make it so that moving diagonally doesn't go faster:
-	// 	if (move != glm::vec2(0.0f)) move = glm::normalize(move) * PlayerSpeed * elapsed;
-
-	// 	//get move in world coordinate system:
-	// 	glm::vec3 remain = player.transform->make_local_to_world() * glm::vec4(move.x, move.y, 0.0f, 0.0f);
-
-	// 	//using a for() instead of a while() here so that if walkpoint gets stuck in
-	// 	// some awkward case, code will not infinite loop:
-	// 	for (uint32_t iter = 0; iter < 10; ++iter) {
-	// 		if (remain == glm::vec3(0.0f)) break;
-	// 		WalkPoint end;
-	// 		float time;
-	// 		walkmesh->walk_in_triangle(player.at, remain, &end, &time);
-	// 		player.at = end;
-	// 		if (time == 1.0f) {
-	// 			//finished within triangle:
-	// 			remain = glm::vec3(0.0f);
-	// 			break;
-	// 		}
-	// 		//some step remains:
-	// 		remain *= (1.0f - time);
-	// 		//try to step over edge:
-	// 		glm::quat rotation;
-	// 		if (walkmesh->cross_edge(player.at, &end, &rotation)) {
-	// 			//stepped to a new triangle:
-	// 			player.at = end;
-	// 			//rotate step to follow surface:
-	// 			remain = rotation * remain;
-	// 		} else {
-	// 			//ran into a wall, bounce / slide along it:
-	// 			glm::vec3 const &a = walkmesh->vertices[player.at.indices.x];
-	// 			glm::vec3 const &b = walkmesh->vertices[player.at.indices.y];
-	// 			glm::vec3 const &c = walkmesh->vertices[player.at.indices.z];
-	// 			glm::vec3 along = glm::normalize(b-a);
-	// 			glm::vec3 normal = glm::normalize(glm::cross(b-a, c-a));
-	// 			glm::vec3 in = glm::cross(normal, along);
-
-	// 			//check how much 'remain' is pointing out of the triangle:
-	// 			float d = glm::dot(remain, in);
-	// 			if (d < 0.0f) {
-	// 				//bounce off of the wall:
-	// 				remain += (-1.25f * d) * in;
-	// 			} else {
-	// 				//if it's just pointing along the edge, bend slightly away from wall:
-	// 				remain += 0.01f * d * in;
-	// 			}
-	// 		}
-	// 	}
-
-	// 	if (remain != glm::vec3(0.0f)) {
-	// 		std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
-	// 	}
-
-	// 	//update player's position to respect walking:
-	// 	player.transform->position = walkmesh->to_world_point(player.at);
-
-	// 	{ //update player's rotation to respect local (smooth) up-vector:
-			
-	// 		glm::quat adjust = glm::rotation(
-	// 			player.transform->rotation * glm::vec3(0.0f, 0.0f, 1.0f), //current up vector
-	// 			walkmesh->to_world_smooth_normal(player.at) //smoothed up vector at walk location
-	// 		);
-	// 		player.transform->rotation = glm::normalize(adjust * player.transform->rotation);
-	// 	}
-
-	// 	/*
-	// 	glm::mat4x3 frame = camera->transform->make_local_to_parent();
-	// 	glm::vec3 right = frame[0];
-	// 	//glm::vec3 up = frame[1];
-	// 	glm::vec3 forward = -frame[2];
-
-	// 	camera->transform->position += move.x * right + move.y * forward;
-	// 	*/
+	//access the recipe queue
+	if (game_stat.satisfac <= 0) {
+		if (game_stat.curr_lvl < 3) {
+			std::printf("game over, stars: %d", game_stat.curr_lvl);
+		} else {
+			std::printf("game over, level: %d, time: %lu", 3, game_stat.curr_time_elapsed);
+		}
+		return;
 	}
 
-	// Update player's inventory drawables positions
-	// {
-	// 	switch (player.active_recipe.sides.size()) {
-	// 	case 0:
-	// 		styrofoam_side->transform->position.x = 100.0f;
-	// 		break;
-	// 	case 1:
-	// 		// styrofoam_side->transform->position = styrofoam_side->transform->make_local_to_world() * glm::vec4(side_pos, 1.0f);
-	// 		// styrofoam_side->transform->position = styrofoam_base->transform->make_local_to_world() * glm::vec4(side_pos, 1.0f);
-	// 		styrofoam_side->transform->position = side_pos;
-	// 		break;
-	// 	default:
-	// 		std::cout << "Invalid active recipe sides size: " << player.active_recipe.sides.size() << "\n";
-	// 	}
-
-	// 	switch (player.active_recipe.entrees.size()) {
-	// 	case 0:
-	// 		styrofoam_entree_right->transform->position.x = 100.0f;
-	// 		styrofoam_entree_left->transform->position.x = 100.0f;
-	// 		break;
-	// 	case 1:
-	// 		styrofoam_entree_right->transform->position = entree_right_pos;
-	// 		styrofoam_entree_left->transform->position.x = 100.0f;
-	// 		break;
-	// 	case 2:
-	// 		styrofoam_entree_right->transform->position = entree_right_pos;
-	// 		styrofoam_entree_left->transform->position = entree_left_pos;
-	// 		break;
-	// 	default:
-	// 		std::cout << "Invalid active recipe entrees size: " << player.active_recipe.entrees.size() << "\n";
-	// 	}
-	// }
-
-	// debug stuff
-	if (r.pressed && r.downs == 1) {
-		player.active_recipe.TryAddSide("noodles");
-	}
-	if (c_button.pressed && c_button.downs == 1) {
-		player.active_recipe.TryAddEntree("veggies");
-	}
-	if (p_button.pressed && p_button.downs == 1) {
-		try_submit_recipe(player.active_recipe);
+	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
+		game_stat.satisfac -= recipe_system.recipe_queue.size() * 0.001;
 	}
 
-	//reset button press counters:
-	left.downs = 0;
-	right.downs = 0;
-	up.downs = 0;
-	down.downs = 0;
-	r.downs = 0;
-	c_button.downs = 0;
-	p_button.downs = 0;
+	// Only make updates if currently playing
+	if (game_stat.playing) {
+
+		// Update time elapsed
+		game_stat.curr_time_elapsed += elapsed;
+
+		// Check if advance to nect level
+		if ((game_stat.curr_lvl == 1 && game_stat.num_helped >= 15)) {
+			// Finished level 1, move to level 2 and reset stats
+			game_stat.curr_lvl = 2;
+			game_stat.curr_time_elapsed = 0;
+			game_stat.num_helped = 0;
+			game_stat.playing = false;
+			game_stat.satisfac = 5.0f;
+			//! TODO: clear order queue
+			//! TODO: edit recipe generator to include more than j chick and rice
+
+		} else if (game_stat.curr_lvl == 2 && game_stat.num_helped >= 20) {
+			// Finished level 2, move to level 3 and reset stats
+			game_stat.curr_lvl = 3;
+			game_stat.curr_time_elapsed = 0;
+			game_stat.num_helped = 0;
+			game_stat.playing = false;
+			game_stat.satisfac = 5.0f;
+			//! TODO: clear order queue
+			//! TODO: edit recipe generator to include some illegal orders
+		}
+	}
 }
 
 std::string float_to_string(float f, size_t precision) {
@@ -714,11 +543,64 @@ std::string float_to_string(float f, size_t precision) {
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
+	
+	if (!game_stat.playing) {
+		//set up light type and position for lit_color_texture_program:
+		glUseProgram(lit_color_texture_program->program);
+		glUniform1i(lit_color_texture_program->LIGHT_TYPE_int, 1);
+		glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f,-1.0f)));
+		glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 0.95f)));
+		glUseProgram(0);
+
+		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		glEnable(GL_DEPTH_TEST);
+		glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
+
+		// Write level instructions
+		if (game_stat.curr_lvl == 1) {
+			std::string lvl_1_text = "Level 1";
+			textRenderer.render_text(lvl_1_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
+
+			std::string lvl_1_instructions_0 = "Every order will be a valid order with:";
+			std::string lvl_1_instructions_1 = "    1 Entre - Chicken";
+			std::string lvl_1_instructions_2 = "    0-2 Sides - Rice";
+			textRenderer.render_text(lvl_1_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+			textRenderer.render_text(lvl_1_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+			textRenderer.render_text(lvl_1_instructions_2, 150.0f, windowH - 350.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+		} else if (game_stat.curr_lvl == 2) {
+			std::string lvl_2_text = "Level 2";
+			textRenderer.render_text(lvl_2_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
+
+			std::string lvl_2_instructions_0 = "Every order will be a valid order with:";
+			std::string lvl_2_instructions_1 = "    1 Entre - Chicken, Dupling, Veggies";
+			std::string lvl_2_instructions_2 = "    0-2 Sides - Rice, Noodles";
+			textRenderer.render_text(lvl_2_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+			textRenderer.render_text(lvl_2_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+			textRenderer.render_text(lvl_2_instructions_2, 150.0f, windowH - 350.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+		} else {
+			std::string lvl_3_text = "Level 3";
+			textRenderer.render_text(lvl_3_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
+
+			std::string lvl_3_instructions_0 = "Valid orders should have:";
+			std::string lvl_3_instructions_1 = "    1 Entre - Chicken, Dupling, Veggies";
+			std::string lvl_3_instructions_2 = "    0-2 Sides - Rice, Noodles";
+			std::string lvl_3_instructions_3 = "Invalid orders should recieve empty trays.";
+			textRenderer.render_text(lvl_3_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+			textRenderer.render_text(lvl_3_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+			textRenderer.render_text(lvl_3_instructions_2, 150.0f, windowH - 350.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+			textRenderer.render_text(lvl_3_instructions_3, 150.0f, windowH - 400.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+		}
+		
+		return;
+	}
+
 	//update camera aspect ratio for drawable:
 	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
 	//set up light type and position for lit_color_texture_program:
-	// TODO: consider using the Light(s) in the scene to do this
 	glUseProgram(lit_color_texture_program->program);
 	glUniform1i(lit_color_texture_program->LIGHT_TYPE_int, 1);
 	glUniform3fv(lit_color_texture_program->LIGHT_DIRECTION_vec3, 1, glm::value_ptr(glm::vec3(0.0f, 0.0f,-1.0f)));
@@ -733,18 +615,6 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
 	scene.draw(*camera);
-
-	/* In case you are wondering if your walkmesh is lining up with your scene, try:
-	{
-		glDisable(GL_DEPTH_TEST);
-		DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
-		for (auto const &tri : walkmesh->triangles) {
-			lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-		}
-	}
-	*/
 
 	{ //use DrawLines to overlay some text:
 		glDisable(GL_DEPTH_TEST);
@@ -783,29 +653,14 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			}
 			textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.25f, glm::vec3(0.0f));
 		}
-
-		// player active recipe
-		// textRenderer.render_text("inventory:", windowW - 160.0f, windowH - 40.0f, 0.5f, glm::vec3(1.0f));
-		// cnt = 3;
-		// for (std::string ingred : player.active_recipe.sides) {
-		// 	textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
-		// 	cnt++;
-		// }
-		// for (std::string ingred : player.active_recipe.entrees) {
-		// 	textRenderer.render_text(ingred, windowW - 160.0f, windowH - cnt * 20.0f, 0.5f, glm::vec3(1.0f));
-		// 	cnt++;
-		// }
 	}
+
 	// Draw satisfacation
 	{
 		std::string satf_text = "Customer Satisfaction: " + float_to_string(game_stat.satisfac, 1);
 		textRenderer.render_text(satf_text, 20.0f, 40.0f, .35f, glm::vec3(0.0f));
 	}
-	// Draw score
-	// {
-	// 	std::string score_text = "Score: " + std::to_string(player.score);
-	// 	textRenderer.render_text(score_text, windowW - 240.0f, 40.0f, 1.0f, glm::vec3(0.0f));
-	// }
+
 	// Update player recipe textures
 	{
 		GLuint side_tex_id, entree_tex_id, entree_right_tex_id, entree_left_tex_id;

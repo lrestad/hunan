@@ -1,3 +1,4 @@
+#pragma once
 
 #include <map>
 #include <string>
@@ -47,7 +48,7 @@ struct TextRenderer {
             std::cerr << "Error loading freetype font face" << std::endl;
             return;
         }
-        FT_Set_Pixel_Sizes(face, 0, 48);
+        FT_Set_Pixel_Sizes(face, 0, 96);
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         // TEMP: LOAD FRST 128 CHARS OF ASCII SET

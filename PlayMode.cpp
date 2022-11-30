@@ -26,27 +26,6 @@ Load< MeshBuffer > counter_meshes(LoadTagDefault, []() -> MeshBuffer const * {
 	return ret;
 });
 
-// From: https://github.com/ixchow/15-466-f18-base3/blob/586f23cf0bbaf80e8e70277442c4e0de7e7612f5/GameMode.cpp#L95-L113
-GLuint load_texture(std::string const &filename) {
-	glm::uvec2 size;
-	std::vector< glm::u8vec4 > data;
-	load_png(filename, &size, &data, LowerLeftOrigin);
-
-	GLuint tex = 0;
-	glGenTextures(1, &tex);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, size.x, size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, data.data());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
-	GL_ERRORS();
-
-	return tex;
-}
-
 // temporary empty texture
 Load< GLuint > empty_tex(LoadTagDefault, []() {
 	GLuint tex;
@@ -64,27 +43,27 @@ Load< GLuint > empty_tex(LoadTagDefault, []() {
 });
 
 Load< GLuint > rice_tex(LoadTagDefault, [](){
-	return new GLuint(load_texture(data_path("textures/rice.png")));
+	return new GLuint(Mode::load_texture(data_path("textures/rice.png")));
 });
 
 Load< GLuint > noodles_tex(LoadTagDefault, [](){
-	return new GLuint(load_texture(data_path("textures/noodles.png")));
+	return new GLuint(Mode::load_texture(data_path("textures/noodles.png")));
 });
 
 Load< GLuint > chicken_tex(LoadTagDefault, [](){
-	return new GLuint(load_texture(data_path("textures/chicken.png")));
+	return new GLuint(Mode::load_texture(data_path("textures/chicken.png")));
 });
 
 Load< GLuint > vegetables_tex(LoadTagDefault, [](){
-	return new GLuint(load_texture(data_path("textures/vegetables.png")));
+	return new GLuint(Mode::load_texture(data_path("textures/vegetables.png")));
 });
 
 Load< GLuint > dumplings_tex(LoadTagDefault, [](){
-	return new GLuint(load_texture(data_path("textures/dumplings.png")));
+	return new GLuint(Mode::load_texture(data_path("textures/dumplings.png")));
 });
 
 Load< GLuint > cash_register_tex(LoadTagDefault, [](){
-	return new GLuint(load_texture(data_path("textures/CashRegister.png")));
+	return new GLuint(Mode::load_texture(data_path("textures/CashRegister.png")));
 });
 
 Load< Sound::Sample > cha_ching_sample(LoadTagDefault, []() -> Sound::Sample const * {
@@ -802,7 +781,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			for (std::string ingred : recipe->entrees) {
 				display_text += ingred + ", ";
 			}
-			textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.5f, glm::vec3(0.0f));
+			textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.25f, glm::vec3(0.0f));
 		}
 
 		// player active recipe
@@ -820,7 +799,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	// Draw satisfacation
 	{
 		std::string satf_text = "Customer Satisfaction: " + float_to_string(game_stat.satisfac, 1);
-		textRenderer.render_text(satf_text, 20.0f, 40.0f, .7f, glm::vec3(0.0f));
+		textRenderer.render_text(satf_text, 20.0f, 40.0f, .35f, glm::vec3(0.0f));
 	}
 	// Draw score
 	// {
@@ -864,7 +843,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	}
 	if (game_stat.satisfac <= 0) {
 		std::string end_text = "GAME OVER";
-		textRenderer.render_text(end_text, windowW / 2 - 240.0f, windowH /2 - .0f, 2.0f, glm::vec3(.8f, .2f, .2f));
+		textRenderer.render_text(end_text, windowW / 2 - 240.0f, windowH /2 - .0f, 1.0f, glm::vec3(.8f, .2f, .2f));
 		return;
 	}
 	GL_ERRORS();

@@ -160,7 +160,7 @@ const glm::vec3 base_start_pos = glm::vec3(4.04f, -17.98f, 27.59f);
 const glm::vec3 side_pos = glm::vec3(3.59f, -17.86f, 28.23f);
 const glm::vec3 entree_right_pos = glm::vec3(4.49f, -18.68f, 27.76f);
 const glm::vec3 entree_left_pos = glm::vec3(4.52f, -17.90f, 28.32f);
-PlayMode::PlayMode() : is_enabled(true), scene(*counter_scene) {
+PlayMode::PlayMode() : scene(*counter_scene) {
 	//create a player and hat transform:
 	{
 		scene.transforms.emplace_back();
@@ -278,9 +278,6 @@ PlayMode::PlayMode() : is_enabled(true), scene(*counter_scene) {
 		};
 	}
 
-	// Start looping sounds
-	crowd_sample = Sound::loop(*crowd_sample_, 0.05f);
-	music_sample = Sound::loop(*music_sample_, 0.75f);
 
 	//create a player camera attached to a child of the player transform:
 	// scene.transforms.emplace_back();
@@ -407,9 +404,6 @@ Scene::ClickableLocation *PlayMode::trace_ray(glm::vec3 position, glm::vec3 ray)
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
-	if (!is_enabled) {
-		return false;
-	}
 	
 	if (end_game) {
 		return false;
@@ -506,9 +500,17 @@ void PlayMode::update(float elapsed) {
 	// If not currently playing, ignore time
 	//! TODO: make each instruction screen its own mode
 	if (!game_stat.playing) {
-		crowd_sample->stop();
-		music_sample->stop();
+		if (crowd_sample != nullptr) {
+			crowd_sample->stop();
+			music_sample->stop();
+		}
+		crowd_sample = nullptr;
+		music_sample = nullptr;
 		return;
+	} else if (crowd_sample == nullptr) {
+		// Start looping sounds
+		crowd_sample = Sound::loop(*crowd_sample_, 0.05f);
+		music_sample = Sound::loop(*music_sample_, 0.75f);
 	}
 
 	// Update satisfaction

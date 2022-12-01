@@ -27,9 +27,6 @@ struct PlayMode : Mode {
 
 	//----- game state -----
 
-	// is this mode enabled (active)
-	bool is_enabled = true;
-
 	//input tracking:
 	struct Button {
 		uint8_t downs = 0;
@@ -96,6 +93,6 @@ struct PlayMode : Mode {
 	Scene::Drawable *styrofoam_entree_left = nullptr;
 
 	// Background sounds tracker (ambient crowd, music?)
-	std::shared_ptr< Sound::PlayingSample > crowd_sample;
-	std::shared_ptr< Sound::PlayingSample > music_sample;
+	std::shared_ptr< Sound::PlayingSample > crowd_sample = nullptr;
+	std::shared_ptr< Sound::PlayingSample > music_sample = nullptr;
 };

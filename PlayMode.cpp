@@ -74,6 +74,14 @@ Load< Sound::Sample > incorrect_sample(LoadTagDefault, []() -> Sound::Sample con
 	return new Sound::Sample(data_path("sounds/incorrect.wav"));
 });
 
+Load< Sound::Sample > crowd_sample_(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/crowd-noise.wav"));
+});
+
+Load< Sound::Sample > music_sample_(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/hunan-rap.wav"));
+});
+
 std::map< std::string, GLuint > ingredient_to_tex;
 enum simplified_clickable_name {
 	rice, noodles, chicken, dumpling, veggies, checkout, neutral, styrofoam
@@ -152,7 +160,7 @@ const glm::vec3 base_start_pos = glm::vec3(4.04f, -17.98f, 27.59f);
 const glm::vec3 side_pos = glm::vec3(3.59f, -17.86f, 28.23f);
 const glm::vec3 entree_right_pos = glm::vec3(4.49f, -18.68f, 27.76f);
 const glm::vec3 entree_left_pos = glm::vec3(4.52f, -17.90f, 28.32f);
-PlayMode::PlayMode() : scene(*counter_scene) {
+PlayMode::PlayMode() : is_enabled(true), scene(*counter_scene) {
 	//create a player and hat transform:
 	{
 		scene.transforms.emplace_back();
@@ -269,6 +277,10 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 			{"Clickable.Neutral", neutral}
 		};
 	}
+
+	// Start looping sounds
+	crowd_sample = Sound::loop(*crowd_sample_, 0.05f);
+	music_sample = Sound::loop(*music_sample_, 0.75f);
 
 	//create a player camera attached to a child of the player transform:
 	// scene.transforms.emplace_back();
@@ -394,6 +406,10 @@ Scene::ClickableLocation *PlayMode::trace_ray(glm::vec3 position, glm::vec3 ray)
 }
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
+	if (!is_enabled) {
+		return false;
+	}
+	
 	if (end_game) {
 		return false;
 	}
@@ -561,6 +577,12 @@ void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Sc
 }
 
 void PlayMode::update(float elapsed) {
+	if (!is_enabled) {
+		crowd_sample->stop();
+		music_sample->stop();
+		return;
+	}
+
 	//access the recipe queue
 	if (game_stat.satisfac <= 0) {
 		return;
@@ -714,6 +736,10 @@ std::string float_to_string(float f, size_t precision) {
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
+	if (!is_enabled) {
+		return;
+	}
+
 	//update camera aspect ratio for drawable:
 	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 

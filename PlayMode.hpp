@@ -3,6 +3,7 @@
 #include "Scene.hpp"
 #include "WalkMesh.hpp"
 #include "Mesh.hpp"
+#include "Sound.hpp"
 
 #include <glm/glm.hpp>
 
@@ -11,6 +12,7 @@
 #include <vector>
 #include <deque>
 #include <functional>
+#include <memory>
 
 #include "Recipe.hpp"
 
@@ -24,6 +26,9 @@ struct PlayMode : Mode {
 	virtual void draw(glm::uvec2 const &drawable_size) override;
 
 	//----- game state -----
+
+	// is this mode enabled (active)
+	bool is_enabled = true;
 
 	//input tracking:
 	struct Button {
@@ -82,4 +87,8 @@ struct PlayMode : Mode {
 	Scene::Drawable *styrofoam_side = nullptr;
 	Scene::Drawable *styrofoam_entree_right = nullptr;
 	Scene::Drawable *styrofoam_entree_left = nullptr;
+
+	// Background sounds tracker (ambient crowd, music?)
+	std::shared_ptr< Sound::PlayingSample > crowd_sample;
+	std::shared_ptr< Sound::PlayingSample > music_sample;
 };

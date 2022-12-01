@@ -46,5 +46,7 @@ Texture loading code from [https://github.com/ixchow/15-466-f18-base3/blob/586f2
 
 Cha Ching sound effect from [https://pixabay.com/sound-effects/cash-register-purchase-87313/](https://pixabay.com/sound-effects/cash-register-purchase-87313/)
 
+Crowd Noise sound effect from [https://elements.envato.com/crowd-chatter-G2LBE5R?utm_source=mixkit&utm_medium=referral&utm_campaign=elements_mixkit_cs_sfx_tag&_ga=2.129647557.870502165.1669856115-602326073.1669856115](https://elements.envato.com/crowd-chatter-G2LBE5R?utm_source=mixkit&utm_medium=referral&utm_campaign=elements_mixkit_cs_sfx_tag&_ga=2.129647557.870502165.1669856115-602326073.1669856115)
+
 This game was built with [NEST](NEST.md).
 

@@ -156,10 +156,10 @@ glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos,
 // This is a prety bad way to do things but it works for now
 const glm::vec3 player_start_pos = glm::vec3(0, -8.9f, 3.5f);
 const glm::vec3 hat_start_pos = glm::vec3(0, 0, 3.5f);
-const glm::vec3 base_start_pos = glm::vec3(4.04f, -17.98f, 27.59f);
-const glm::vec3 side_pos = glm::vec3(3.59f, -17.86f, 28.23f);
-const glm::vec3 entree_right_pos = glm::vec3(4.49f, -18.68f, 27.76f);
-const glm::vec3 entree_left_pos = glm::vec3(4.52f, -17.90f, 28.32f);
+const glm::vec3 base_start_pos = glm::vec3(4.04f, -18.16f, 27.8f);
+const glm::vec3 side_pos = glm::vec3(3.5f, -18.1f, 28.5f);
+const glm::vec3 entree_right_pos = glm::vec3(4.49f, -18.8f, 27.9f);
+const glm::vec3 entree_left_pos = glm::vec3(4.52f, -18.0f, 28.4f);
 PlayMode::PlayMode() : scene(*counter_scene) {
 	//create a player and hat transform:
 	{

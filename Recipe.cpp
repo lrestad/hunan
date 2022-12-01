@@ -36,7 +36,7 @@ void Recipe::TryAddEntree(std::string entree) {
 
 void RecipeQueueSystem::generate_order(unsigned int level, unsigned int total_time, unsigned int elapsed) {
 
-	std::printf("generating order %lu \n", recipe_queue.size());
+	// std::printf("generating order %lu \n", recipe_queue.size());
 
 	// Do not add a new order
 	/*if ((recipe_queue.size() >= 5) || (total_time / 5000 == (total_time + elapsed) / 5000)) {

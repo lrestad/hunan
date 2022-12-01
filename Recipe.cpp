@@ -21,6 +21,13 @@ bool Recipe::is_match(Recipe* _recipe) {
 	std::sort(sides1.begin(), sides1.end());
 	std::sort(sides2.begin(), sides2.end());
 
+	if (entrees1.size() != entrees2.size()) {
+		std::printf("diff nbr of entrees");
+	}
+	if (sides1.size() != sides2.size()) {
+		std::printf("diff nbr of sides");
+	}
+
 	return sides1 == sides2 && entrees1 == entrees2;
 }
 

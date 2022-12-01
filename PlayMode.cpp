@@ -513,11 +513,6 @@ void PlayMode::update(float elapsed) {
 		music_sample = Sound::loop(*music_sample_, 0.75f);
 	}
 
-	// Update satisfaction
-	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
-		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.001;
-	}
-
 	// If satisfaction is too low, end game
 	//! TODO: make 'game over' its own mode
 	if (game_stat.satisfac <= 0) {
@@ -527,6 +522,11 @@ void PlayMode::update(float elapsed) {
 			std::printf("game over, level: %d, time: %lu", 3, game_stat.curr_time_elapsed);
 		}
 		return;
+	}
+
+	// Update satisfaction
+	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
+		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.0005;
 	}
 
 	// If finished with level 1, move to level 2 and reset stats
@@ -671,13 +671,14 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 
 	// Update player recipe textures
 	{
-		GLuint side_tex_id, entree_tex_id, side_right_tex_id, side_left_tex_id;
+		//GLuint side_tex_id, entree_tex_id, side_right_tex_id, side_left_tex_id;
+		GLuint side_tex_id, side_right_tex_id, side_left_tex_id;
 		switch (player.active_recipe.entrees.size()) {
 		case 0:
 			styrofoam_entree->pipeline.textures[0].texture = *empty_tex;
 			break;
 		case 1:
-			entree_tex_id = ingredient_to_tex[player.active_recipe.entrees[0]];
+			//entree_tex_id = ingredient_to_tex[player.active_recipe.entrees[0]];
 			styrofoam_entree->pipeline.textures[0].texture = ingredient_to_tex[player.active_recipe.entrees[0]];
 			break;
 		default:

@@ -15,7 +15,7 @@ struct Recipe {
 
 struct RecipeQueueSystem {
 	std::vector<std::string> allowed_entrees = {"chicken", "veggies"};
-	std::vector<std::string> allowed_sides = {"rice", "noodles", "dumplings"};
+	std::vector<std::string> allowed_sides = {"rice", "noodles", "dumpling"};
 	std::deque<Recipe*> recipe_queue;
 
 	void generate_order(unsigned int level, unsigned int total_time, unsigned int elapsed);

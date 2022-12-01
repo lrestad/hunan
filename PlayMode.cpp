@@ -157,9 +157,9 @@ glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos,
 const glm::vec3 player_start_pos = glm::vec3(0, -8.9f, 3.5f);
 const glm::vec3 hat_start_pos = glm::vec3(0, 0, 3.5f);
 const glm::vec3 base_start_pos = glm::vec3(4.04f, -18.16f, 27.8f);
-const glm::vec3 side_pos = glm::vec3(3.5f, -18.1f, 28.5f);
-const glm::vec3 entree_right_pos = glm::vec3(4.49f, -18.8f, 27.9f);
-const glm::vec3 entree_left_pos = glm::vec3(4.52f, -18.0f, 28.4f);
+const glm::vec3 entree_pos = glm::vec3(3.5f, -18.1f, 28.5f);
+const glm::vec3 side_right_pos = glm::vec3(4.49f, -18.8f, 27.9f);
+const glm::vec3 side_left_pos = glm::vec3(4.52f, -18.0f, 28.4f);
 PlayMode::PlayMode() : scene(*counter_scene) {
 	//create a player and hat transform:
 	{
@@ -200,22 +200,22 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 	// temporary: spawn styrofoam in styrofoam start location and then move to the side
 	{
 		Mesh const &base_mesh = counter_meshes->lookup("Styrofoam.Base");
-		Mesh const &side_mesh = counter_meshes->lookup("Styrofoam.Side");
-		Mesh const &entree_right_mesh = counter_meshes->lookup("Styrofoam.Entree.Right");
-		Mesh const &entree_left_mesh = counter_meshes->lookup("Styrofoam.Entree.Left");
+		Mesh const &entree_mesh = counter_meshes->lookup("Styrofoam.Entree");
+		Mesh const &side_right_mesh = counter_meshes->lookup("Styrofoam.Side.Right");
+		Mesh const &side_left_mesh = counter_meshes->lookup("Styrofoam.Side.Left");
 
 		scene.transforms.emplace_back();
 		Scene::Transform *base_transform = &scene.transforms.back();
 		scene.transforms.emplace_back();
-		Scene::Transform *side_transform = &scene.transforms.back();
+		Scene::Transform *entree_transform = &scene.transforms.back();
 		scene.transforms.emplace_back();
-		Scene::Transform *entree_right_transform = &scene.transforms.back();
+		Scene::Transform *side_right_transform = &scene.transforms.back();
 		scene.transforms.emplace_back();
-		Scene::Transform *entree_left_transform = &scene.transforms.back();
+		Scene::Transform *side_left_transform = &scene.transforms.back();
 		base_transform->position = base_start_pos;
-		side_transform->position = side_pos;
-		entree_right_transform->position = entree_right_pos;
-		entree_left_transform->position = entree_left_pos;
+		entree_transform->position = entree_pos;
+		side_right_transform->position = side_right_pos;
+		side_left_transform->position = side_left_pos;
 		// temporary: move off-screen. might not need this at all tbh.
 		// base_transform->position.x = 100.0f;
 
@@ -227,29 +227,29 @@ PlayMode::PlayMode() : scene(*counter_scene) {
 		styrofoam_base->pipeline.start = base_mesh.start;
 		styrofoam_base->pipeline.count = base_mesh.count;
 
-		scene.drawables.emplace_back(side_transform);
-		styrofoam_side = &scene.drawables.back();
-		styrofoam_side->pipeline = lit_color_texture_program_pipeline;
-		styrofoam_side->pipeline.vao = counter_meshes_for_lit_color_texture_program;
-		styrofoam_side->pipeline.type = side_mesh.type;
-		styrofoam_side->pipeline.start = side_mesh.start;
-		styrofoam_side->pipeline.count = side_mesh.count;
+		scene.drawables.emplace_back(entree_transform);
+		styrofoam_entree = &scene.drawables.back();
+		styrofoam_entree->pipeline = lit_color_texture_program_pipeline;
+		styrofoam_entree->pipeline.vao = counter_meshes_for_lit_color_texture_program;
+		styrofoam_entree->pipeline.type = entree_mesh.type;
+		styrofoam_entree->pipeline.start = entree_mesh.start;
+		styrofoam_entree->pipeline.count = entree_mesh.count;
 
-		scene.drawables.emplace_back(entree_right_transform);
-		styrofoam_entree_right = &scene.drawables.back();
-		styrofoam_entree_right->pipeline = lit_color_texture_program_pipeline;
-		styrofoam_entree_right->pipeline.vao = counter_meshes_for_lit_color_texture_program;
-		styrofoam_entree_right->pipeline.type = entree_right_mesh.type;
-		styrofoam_entree_right->pipeline.start = entree_right_mesh.start;
-		styrofoam_entree_right->pipeline.count = entree_right_mesh.count;
+		scene.drawables.emplace_back(side_right_transform);
+		styrofoam_side_right = &scene.drawables.back();
+		styrofoam_side_right->pipeline = lit_color_texture_program_pipeline;
+		styrofoam_side_right->pipeline.vao = counter_meshes_for_lit_color_texture_program;
+		styrofoam_side_right->pipeline.type = side_right_mesh.type;
+		styrofoam_side_right->pipeline.start = side_right_mesh.start;
+		styrofoam_side_right->pipeline.count = side_right_mesh.count;
 
-		scene.drawables.emplace_back(entree_left_transform);
-		styrofoam_entree_left = &scene.drawables.back();
-		styrofoam_entree_left->pipeline = lit_color_texture_program_pipeline;
-		styrofoam_entree_left->pipeline.vao = counter_meshes_for_lit_color_texture_program;
-		styrofoam_entree_left->pipeline.type = entree_left_mesh.type;
-		styrofoam_entree_left->pipeline.start = entree_left_mesh.start;
-		styrofoam_entree_left->pipeline.count = entree_left_mesh.count;
+		scene.drawables.emplace_back(side_left_transform);
+		styrofoam_side_left = &scene.drawables.back();
+		styrofoam_side_left->pipeline = lit_color_texture_program_pipeline;
+		styrofoam_side_left->pipeline.vao = counter_meshes_for_lit_color_texture_program;
+		styrofoam_side_left->pipeline.type = side_left_mesh.type;
+		styrofoam_side_left->pipeline.start = side_left_mesh.start;
+		styrofoam_side_left->pipeline.count = side_left_mesh.count;
 	}
 
 	// Create map from ingredients to textures
@@ -595,7 +595,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			textRenderer.render_text(lvl_2_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 			std::string lvl_2_instructions_0 = "Every order will be a valid order with:";
-			std::string lvl_2_instructions_1 = "    1 Entree - Chicken, Dupling, Veggies";
+			std::string lvl_2_instructions_1 = "    1 Entree - Chicken, Dumpling, Veggies";
 			std::string lvl_2_instructions_2 = "    0-2 Sides - Rice, Noodles";
 			textRenderer.render_text(lvl_2_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_2_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -605,7 +605,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			textRenderer.render_text(lvl_3_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 			std::string lvl_3_instructions_0 = "Valid orders should have:";
-			std::string lvl_3_instructions_1 = "    1 Entree - Chicken, Dupling, Veggies";
+			std::string lvl_3_instructions_1 = "    1 Entree - Chicken, Dumpling, Veggies";
 			std::string lvl_3_instructions_2 = "    0-2 Sides - Rice, Noodles";
 			std::string lvl_3_instructions_3 = "Invalid orders should recieve empty trays.";
 			textRenderer.render_text(lvl_3_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -671,37 +671,39 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 
 	// Update player recipe textures
 	{
-		GLuint side_tex_id, entree_tex_id, entree_right_tex_id, entree_left_tex_id;
-		switch (player.active_recipe.sides.size()) {
-		case 0:
-			styrofoam_side->pipeline.textures[0].texture = *empty_tex;
-			break;
-		case 1:
-			side_tex_id = ingredient_to_tex[player.active_recipe.sides[0]];
-			styrofoam_side->pipeline.textures[0].texture = side_tex_id;
-			break;
-		default:
-			std::cout << "Invalid active recipe sides size: " << player.active_recipe.sides.size() << "\n";
-		}
-
+		GLuint side_tex_id, entree_tex_id, side_right_tex_id, side_left_tex_id;
 		switch (player.active_recipe.entrees.size()) {
 		case 0:
-			styrofoam_entree_right->pipeline.textures[0].texture = *empty_tex;
-			styrofoam_entree_left->pipeline.textures[0].texture = *empty_tex;
+			styrofoam_entree->pipeline.textures[0].texture = *empty_tex;
 			break;
 		case 1:
-			styrofoam_entree_left->pipeline.textures[0].texture = *empty_tex;
 			entree_tex_id = ingredient_to_tex[player.active_recipe.entrees[0]];
-			styrofoam_entree_right->pipeline.textures[0].texture = entree_tex_id;
-			break;
-		case 2:
-			entree_right_tex_id = ingredient_to_tex[player.active_recipe.entrees[0]];
-			styrofoam_entree_right->pipeline.textures[0].texture = entree_right_tex_id;
-			entree_left_tex_id = ingredient_to_tex[player.active_recipe.entrees[1]];
-			styrofoam_entree_left->pipeline.textures[0].texture = entree_left_tex_id;
+			styrofoam_entree->pipeline.textures[0].texture = ingredient_to_tex[player.active_recipe.entrees[0]];
 			break;
 		default:
 			std::cout << "Invalid active recipe entrees size: " << player.active_recipe.entrees.size() << "\n";
+		}
+
+		switch (player.active_recipe.sides.size()) {
+		case 0:
+			styrofoam_side_right->pipeline.textures[0].texture = *empty_tex;
+			styrofoam_side_left->pipeline.textures[0].texture = *empty_tex;
+			break;
+		case 1:
+			styrofoam_side_left->pipeline.textures[0].texture = *empty_tex;
+			side_tex_id = ingredient_to_tex[player.active_recipe.sides[0]];
+			std::cout << "side 0: " << player.active_recipe.sides[0] << " tex id: " << side_tex_id << "\n";
+			styrofoam_side_right->pipeline.textures[0].texture = side_tex_id;
+			std::cout << "side right texid: " << styrofoam_side_right->pipeline.textures[0].texture << "\n";
+			break;
+		case 2:
+			side_right_tex_id = ingredient_to_tex[player.active_recipe.sides[0]];
+			styrofoam_side_right->pipeline.textures[0].texture = side_right_tex_id;
+			side_left_tex_id = ingredient_to_tex[player.active_recipe.sides[1]];
+			styrofoam_side_left->pipeline.textures[0].texture = side_left_tex_id;
+			break;
+		default:
+			std::cout << "Invalid active recipe sides size: " << player.active_recipe.sides.size() << "\n";
 		}
 	}
 	if (game_stat.satisfac <= 0) {

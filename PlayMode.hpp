@@ -88,9 +88,9 @@ struct PlayMode : Mode {
 
 	// Player's styrofoam container.
 	Scene::Drawable *styrofoam_base = nullptr;
-	Scene::Drawable *styrofoam_side = nullptr;
-	Scene::Drawable *styrofoam_entree_right = nullptr;
-	Scene::Drawable *styrofoam_entree_left = nullptr;
+	Scene::Drawable *styrofoam_entree = nullptr;
+	Scene::Drawable *styrofoam_side_right = nullptr;
+	Scene::Drawable *styrofoam_side_left = nullptr;
 
 	// Background sounds tracker (ambient crowd, music?)
 	std::shared_ptr< Sound::PlayingSample > crowd_sample = nullptr;

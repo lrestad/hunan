@@ -34,7 +34,7 @@ struct PlayMode : Mode {
 	struct Button {
 		uint8_t downs = 0;
 		uint8_t pressed = 0;
-	} left, right, down, up, r, c_button, p_button;
+	} left, right, down, up, enter;
 
 	//local copy of the game scene (so code can change it during gameplay):
 	Scene scene;
@@ -60,6 +60,7 @@ struct PlayMode : Mode {
 
 		// Constants
 	} player;
+
 	struct GameStat {
 		unsigned long target_time = 3000;
 		unsigned long curr_time_elapsed = 0;
@@ -67,9 +68,15 @@ struct PlayMode : Mode {
 		unsigned int curr_order = 0;
 		float curr_score = 0.0f;
 		float satisfac = 5.0f; //customer satisfaction 
+		bool game_started = false;
 		bool game_over;
+		unsigned int num_helped = 0;
+		bool playing = false;
+		unsigned int curr_lvl = 1;
 	}game_stat;
-	RecipeQueueSystem recipe_system;
+
+	RecipeQueueSystem recipe_queue_system;
+
 	void try_submit_recipe(Recipe recipe);
 	void handle_click(SDL_Event evt);
 	void on_click_location(Scene::ClickableLocation *clickableLocation, Scene::Transform *to_move);

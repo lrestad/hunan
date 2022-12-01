@@ -2,7 +2,9 @@
 #include <algorithm>
 #include <random>
 
-Recipe::Recipe() {}
+Recipe::Recipe() {
+	valid = true;
+}
 
 Recipe::Recipe(std::vector<std::string> _entrees, std::vector<std::string> _sides, bool _valid) {
 	entrees = std::vector<std::string>(_entrees.begin(), _entrees.end());
@@ -11,25 +13,24 @@ Recipe::Recipe(std::vector<std::string> _entrees, std::vector<std::string> _side
 }
 
 bool Recipe::is_match(Recipe* _recipe) {
-	std::vector<std::string> entrees1 = entrees;
-	std::vector<std::string> entrees2 = _recipe->entrees;
-	std::sort(entrees1.begin(), entrees1.end());
-	std::sort(entrees2.begin(), entrees2.end());
+	if (valid && _recipe->valid) {
+		std::vector<std::string> entrees1 = entrees;
+		std::vector<std::string> entrees2 = _recipe->entrees;
+		std::sort(entrees1.begin(), entrees1.end());
+		std::sort(entrees2.begin(), entrees2.end());
 
-	std::vector<std::string> sides1 = sides;
-	std::vector<std::string> sides2 = _recipe->sides;
-	std::sort(sides1.begin(), sides1.end());
-	std::sort(sides2.begin(), sides2.end());
+		std::vector<std::string> sides1 = sides;
+		std::vector<std::string> sides2 = _recipe->sides;
+		std::sort(sides1.begin(), sides1.end());
+		std::sort(sides2.begin(), sides2.end());
 
-	if (entrees1.size() != entrees2.size()) {
-		std::printf("diff nbr of entrees");
+		return sides1 == sides2 && entrees1 == entrees2;
+	} else if (valid) {
+		return entrees.size() == 0 && sides.size() == 0;
+	} else {
+		return _recipe->entrees.size() == 0 && _recipe->sides.size() == 0;
 	}
-	if (sides1.size() != sides2.size()) {
-		std::printf("diff nbr of sides");
-	}
-
-	return sides1 == sides2 && entrees1 == entrees2;
-}
+}	
 
 void Recipe::TryAddSide(std::string side) {
 	if (sides.size() < 2)

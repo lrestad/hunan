@@ -1,11 +1,8 @@
 //Mode.hpp declares the "Mode::current" static member variable, which is used to decide where event-handling, updating, and drawing events go:
 #include "Mode.hpp"
 
-//The 'PlayMode' mode plays the game:
-#include "PlayMode.hpp"
-
-//The 'MainMenu' mode runs the main menu:
 #include "MainMenuMode.hpp"
+#include "GP22IntroMode.hpp"
 
 //For asset loading:
 #include "Load.hpp"
@@ -116,7 +113,7 @@ int main(int argc, char **argv) {
 
 	//------------ create game mode + make current --------------
 	// Mode::set_current(std::make_shared< PlayMode >());
-	Mode::set_current(std::make_shared< MainMenuMode >());
+	Mode::set_current(std::make_shared< GP22IntroMode >( std::make_shared< MainMenuMode >() ));
 
 	//------------ main loop ------------
 

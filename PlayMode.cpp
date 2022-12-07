@@ -1,4 +1,5 @@
 #include "PlayMode.hpp"
+#include "MainMenuMode.hpp"
 
 #include "LitColorTextureProgram.hpp"
 #include "load_save_png.hpp"
@@ -417,6 +418,22 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		if (evt.key.keysym.sym == SDLK_SPACE) {
 			recipe_queue_system.recipe_queue.pop_front();
 			return true;
+		} else if (evt.key.keysym.sym == SDLK_ESCAPE) {
+			escape.downs++;
+			escape.pressed = true;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_r) {
+			r_button.downs++;
+			r_button.pressed = true;
+			return true;
+		}
+	} else if (evt.type == SDL_KEYUP) {
+		if (evt.key.keysym.sym == SDLK_ESCAPE) {
+			escape.pressed = false;
+			return true;
+		} else if (evt.key.keysym.sym == SDLK_r) {
+			r_button.pressed = false;
+			return true;
 		}
 	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
 		if (!game_stat.playing) {
@@ -553,6 +570,28 @@ void PlayMode::update(float elapsed) {
 
 	// Update level total time
 	game_stat.curr_time_elapsed += elapsed;
+	
+	// Check if player is trying to exit or restart.
+	if (escape.pressed) {
+		game_stat.playing = false;
+		if (crowd_sample != nullptr) {
+			crowd_sample->stop();
+			music_sample->stop();
+		}
+		Mode::set_current(std::make_shared< MainMenuMode >());
+	}
+	escape.downs = 0;
+	if (r_button.pressed) {
+		game_stat.playing = false;
+		if (crowd_sample != nullptr) {
+			crowd_sample->stop();
+			music_sample->stop();
+		}
+		auto new_level = std::make_shared< PlayMode>();
+		new_level->game_stat.curr_lvl = game_stat.curr_lvl;
+		Mode::set_current(new_level);
+	}
+	r_button.downs = 0;
 }
 
 std::string float_to_string(float f, size_t precision) {
@@ -710,6 +749,10 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	if (game_stat.satisfac <= 0) {
 		std::string end_text = "GAME OVER";
 		textRenderer.render_text(end_text, windowW / 2 - 240.0f, windowH /2 - .0f, 1.0f, glm::vec3(.8f, .2f, .2f));
+		end_text = "Press r to restart level.";
+		textRenderer.render_text(end_text, windowW / 2 - 200.0f, windowH / 2 - 40.0f, 0.5f, glm::vec3(.8f, .2f, .2f));
+		end_text = "Press esc to return to main menu.";
+		textRenderer.render_text(end_text, windowW / 2 - 300.0f, windowH / 2 - 80.0f, 0.5f, glm::vec3(.8f, .2f, .2f));
 		return;
 	}
 	GL_ERRORS();

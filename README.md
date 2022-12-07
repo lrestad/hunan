@@ -44,6 +44,8 @@ Dumplings texture from [Photo by Anna Tarazevich: https://www.pexels.com/photo/c
 
 Texture loading code from [https://github.com/ixchow/15-466-f18-base3/blob/586f23cf0bbaf80e8e70277442c4e0de7e7612f5/GameMode.cpp#L95-L113](https://github.com/ixchow/15-466-f18-base3/blob/586f23cf0bbaf80e8e70277442c4e0de7e7612f5/GameMode.cpp#L95-L113)
 
+Sprite class from Team Virtuoso[https://github.com/angelaz1/15-466-f22-final](https://github.com/angelaz1/15-466-f22-final)
+
 Cha Ching sound effect from [https://pixabay.com/sound-effects/cash-register-purchase-87313/](https://pixabay.com/sound-effects/cash-register-purchase-87313/)
 
 Crowd Noise sound effect from [https://elements.envato.com/crowd-chatter-G2LBE5R?utm_source=mixkit&utm_medium=referral&utm_campaign=elements_mixkit_cs_sfx_tag&_ga=2.129647557.870502165.1669856115-602326073.1669856115](https://elements.envato.com/crowd-chatter-G2LBE5R?utm_source=mixkit&utm_medium=referral&utm_campaign=elements_mixkit_cs_sfx_tag&_ga=2.129647557.870502165.1669856115-602326073.1669856115)

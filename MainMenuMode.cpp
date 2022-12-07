@@ -48,10 +48,11 @@ Load< Scene > mm_scene(LoadTagDefault, []() -> Scene const * {
     return new_scene;
 });
 
-MainMenuMode::MainMenuMode() : scene(*mm_scene) {
+MainMenuMode::MainMenuMode() : scene(*mm_scene), 
+        bg_sprite(Sprite(data_path("textures/MainMenu-Image.png"))) {
 	camera = &scene.cameras.back();
 
-    // create the cute
+    // create the cube
     {
         scene.transforms.emplace_back();
         Scene::Transform *cube_trans = &scene.transforms.back();
@@ -78,9 +79,6 @@ MainMenuMode::~MainMenuMode() {
 bool MainMenuMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
     if (!isEnabled)
         return false;
-    
-    windowW = window_size.x;
-    windowH = window_size.y;
 
     if (evt.type == SDL_MOUSEBUTTONDOWN) {
         Mode::set_current(std::make_shared< PlayMode >());
@@ -101,15 +99,24 @@ void MainMenuMode::update(float elapsed) {
         cube->transform->rotation = glm::quat(eulers);
         total_time += elapsed;
         cube->transform->position.z = cube_amplitude * 
-            glm::sin(total_time * glm::pi<float>() * (2 / cube_period));
+            glm::sin(total_time * glm::pi<float>() * (2 / cube_period)) +
+                cube_offset.z;
     }
 }
 
 void MainMenuMode::draw(glm::uvec2 const &drawable_size) {
     if (!isEnabled)
         return;
+    
+    windowW = drawable_size.x;
+    windowH = drawable_size.y;
+
 	//update camera aspect ratio for drawable:
 	camera->aspect = float(drawable_size.x) / float(drawable_size.y);
+
+    // Draw background first
+    bg_sprite.set_drawable_size(drawable_size);
+    bg_sprite.draw(glm::vec2(windowW / 2, windowH / 2), 2.0f);
 
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
@@ -119,17 +126,18 @@ void MainMenuMode::draw(glm::uvec2 const &drawable_size) {
 	glUniform3fv(lit_color_texture_program->LIGHT_ENERGY_vec3, 1, glm::value_ptr(glm::vec3(1.0f, 1.0f, 0.95f)));
 	glUseProgram(0);
 
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	// glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 	glClearDepth(1.0f); //1.0 is actually the default value to clear the depth buffer to, but FYI you can change it.
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS); //this is the default depth comparison function, but FYI you can change it.
 
 	scene.draw(*camera);
 
+    // Render text last.
     {
-		textRenderer.render_text("HUNAN", windowW / 4, 3 * windowH / 5, 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-        textRenderer.render_text("Click to play", 5 * windowW / 8, windowH / 2, 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
+		textRenderer.render_text("HUNAN", windowW / 8, 3 * windowH / 10, 2.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+        textRenderer.render_text("Click to play", 5 * windowW / 16 - 20, windowH / 4, 0.5f, glm::vec3(1.0f, 0.0f, 0.0f));
 	}
 }

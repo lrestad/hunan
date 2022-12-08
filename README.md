@@ -32,6 +32,8 @@ Clicking and object collision used from team PewPew, oritinally adapted from 15-
 
 Dumpling models from [https://www.turbosquid.com/3d-models/3d-dumpling-1923633](https://www.turbosquid.com/3d-models/3d-dumpling-1923633)
 
+Noodles model from [https://www.cgtrader.com/free-3d-models/food/miscellaneous/noodles-3be72fcc-9755-4632-8f1d-285749ab69b3](https://www.cgtrader.com/free-3d-models/food/miscellaneous/noodles-3be72fcc-9755-4632-8f1d-285749ab69b3)
+
 Rice texture from [https://www.pexels.com/photo/rice-in-close-up-photography-4187621/](https://www.pexels.com/photo/rice-in-close-up-photography-4187621/)
 
 Noodles texture from [Photo by Polina Tankilevitch: https://www.pexels.com/photo/close-up-photo-of-uncooked-noodles-4518664/](https://www.pexels.com/photo/close-up-photo-of-uncooked-noodles-4518664/)

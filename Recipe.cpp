@@ -27,7 +27,9 @@ bool Recipe::is_match(Recipe* _recipe) {
 	if (sides1.size() != sides2.size()) {
 		std::printf("diff nbr of sides");
 	}
-
+	if (!valid) {
+		return entrees2.size() == 0 && sides2.size() == 0;
+	}
 	return sides1 == sides2 && entrees1 == entrees2;
 }
 

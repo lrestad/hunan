@@ -10,6 +10,7 @@
 #include "gl_errors.hpp"
 #include "data_path.hpp"
 #include "Sound.hpp"
+#include "Sprite.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -159,7 +160,7 @@ glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos,
 }
 
 // This is a prety bad way to do things but it works for now
-const glm::vec3 player_start_pos = glm::vec3(0, -8.9f, 3.5f);
+const glm::vec3 player_start_pos = glm::vec3(0, -11.0f, 3.5f);
 const glm::vec3 hat_start_pos = glm::vec3(0, 0, 3.5f);
 const glm::vec3 base_start_pos = glm::vec3(4.04f, -18.16f, 27.8f);
 const glm::vec3 entree_pos = glm::vec3(3.5f, -18.1f, 28.5f);
@@ -587,7 +588,7 @@ void PlayMode::update(float elapsed) {
 		game_stat.playing = false;
 		game_stat.satisfac = 5.0f;
 		game_stat.helped_goal = 20;
-		//! TODO: clear order queue
+		recipe_queue_system.recipe_queue = std::deque<Recipe*>();
 
 	// If finished with level 2, move to level 3 and reset stats
 	} else if (game_stat.curr_lvl == 2 && game_stat.num_helped >= game_stat.helped_goal) {
@@ -596,11 +597,13 @@ void PlayMode::update(float elapsed) {
 		game_stat.num_helped = 0;
 		game_stat.playing = false;
 		game_stat.satisfac = 5.0f;
-		//! TODO: clear order queue
+		recipe_queue_system.recipe_queue = std::deque<Recipe*>();
 	}
 
 	// Update order queue
-	recipe_queue_system.add_recipe_timer += elapsed;
+	if (recipe_queue_system.recipe_queue.size() < recipe_queue_system.queue_max_size)
+		recipe_queue_system.add_recipe_timer += elapsed;
+	
 	if (recipe_queue_system.add_recipe_timer >= recipe_queue_system.add_recipe_delay) {
 		recipe_queue_system.generate_order((unsigned int)game_stat.curr_lvl, (unsigned int)game_stat.curr_time_elapsed, (unsigned int)elapsed);
 		recipe_queue_system.add_recipe_timer -= recipe_queue_system.add_recipe_delay;
@@ -701,22 +704,22 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			0.0f, 0.0f, 0.0f, 1.0f
 		));
 	}
-	// Print recipes
-	{
-		// recipes to complete
-		int cnt = 1;
-		for (Recipe* recipe : recipe_queue_system.recipe_queue) {
-			std::string display_text = "Recipe " + std::to_string(cnt++) + ": ";
+	// Print recipes (old: now draw icon)
+	// {
+	// 	// recipes to complete
+	// 	int cnt = 1;
+	// 	for (Recipe* recipe : recipe_queue_system.recipe_queue) {
+	// 		std::string display_text = "Recipe " + std::to_string(cnt++) + ": ";
 
-			for (std::string ingred : recipe->sides) {
-				display_text += ingred + ", ";
-			}
-			for (std::string ingred : recipe->entrees) {
-				display_text += ingred + ", ";
-			}
-			textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.25f, glm::vec3(0.0f));
-		}
-	}
+	// 		for (std::string ingred : recipe->sides) {
+	// 			display_text += ingred + ", ";
+	// 		}
+	// 		for (std::string ingred : recipe->entrees) {
+	// 			display_text += ingred + ", ";
+	// 		}
+	// 		textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.25f, glm::vec3(0.0f));
+	// 	}
+	// }
 
 	// Draw satisfacation
 	{
@@ -760,6 +763,19 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			std::cout << "Invalid active recipe sides size: " << player.active_recipe.sides.size() << "\n";
 		}
 	}
+	
+	// Draw recipe sprites
+	// if (recipe_queue_system.recipe_queue.size() > 0) {
+	float recipe_icon_scale = 0.75f;
+	GLuint offset = 330 * recipe_icon_scale;
+	for (auto it = recipe_queue_system.recipe_queue.begin(); it != recipe_queue_system.recipe_queue.end(); ++it) {
+		std::string img_name = (*it)->to_image_name();
+		Sprite tmp_sprite(data_path("ui/" + img_name));
+		tmp_sprite.set_drawable_size(drawable_size);
+		tmp_sprite.draw(glm::vec2(offset, drawable_size.y - (120 * recipe_icon_scale)), recipe_icon_scale);
+		offset += 630 * recipe_icon_scale;
+	}
+	
 	if (game_stat.satisfac <= 0) {
 		std::string end_text = "GAME OVER";
 		textRenderer.render_text(end_text, windowW / 2 - 240.0f, windowH /2 - .0f, 1.0f, glm::vec3(.8f, .2f, .2f));

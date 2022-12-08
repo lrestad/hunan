@@ -2,7 +2,7 @@
 #include "Mode.hpp"
 
 #include "MainMenuMode.hpp"
-#include "GP22IntroMode.hpp"
+//#include "GP22IntroMode.hpp"
 
 //For asset loading:
 #include "Load.hpp"
@@ -112,8 +112,8 @@ int main(int argc, char **argv) {
 	call_load_functions();
 
 	//------------ create game mode + make current --------------
-	// Mode::set_current(std::make_shared< PlayMode >());
-	Mode::set_current(std::make_shared< GP22IntroMode >( std::make_shared< MainMenuMode >() ));
+	Mode::set_current(std::make_shared< PlayMode >());
+	//Mode::set_current(std::make_shared< GP22IntroMode >( std::make_shared< MainMenuMode >() ));
 
 	//------------ main loop ------------
 

@@ -68,6 +68,7 @@ struct PlayMode : Mode {
 		bool game_started = false;
 		bool game_over;
 		unsigned int num_helped = 0;
+		unsigned int helped_goal = 15;
 		bool playing = false;
 		unsigned int curr_lvl = 1;
 	}game_stat;

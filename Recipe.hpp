@@ -19,7 +19,7 @@ struct RecipeQueueSystem {
 	std::vector<std::string> allowed_sides = {"rice", "noodles", "dumpling"};
 	std::deque<Recipe*> recipe_queue;
 
-	float add_recipe_delay = 1.0f;
+	float add_recipe_delay = 1.5f;
 	float add_recipe_timer = 0.0f;
 	int queue_max_size = 5;
 

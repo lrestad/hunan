@@ -576,9 +576,9 @@ void PlayMode::update(float elapsed) {
 	}
 
 	// Update satisfaction
-	std::printf("elapsed: %lu\n", elapsed);
+	// std::printf("elapsed: %lu\n", elapsed);
 	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
-		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.0001;
+		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.0005;
 	}
 
 	// If finished with level 1, move to level 2 and reset stats
@@ -598,7 +598,19 @@ void PlayMode::update(float elapsed) {
 		game_stat.num_helped = 0;
 		game_stat.playing = false;
 		game_stat.satisfac = 5.0f;
+		game_stat.helped_goal = 25;
 		recipe_queue_system.recipe_queue = std::deque<Recipe*>();
+	} else if (game_stat.curr_lvl == 3 && game_stat.num_helped >= game_stat.helped_goal) {
+		game_stat.curr_lvl = 4;
+		game_stat.curr_time_elapsed = 0;
+		game_stat.num_helped = 0;
+		game_stat.playing = false;
+		game_stat.satisfac = 5.0f;
+		game_stat.helped_goal = 0;
+		recipe_queue_system.recipe_queue = std::deque<Recipe*>();
+	} else if (game_stat.curr_lvl == 4 && game_stat.num_helped >= game_stat.helped_goal) {
+		escape.downs++;
+		escape.pressed = true;
 	}
 
 	// Update order queue
@@ -675,23 +687,28 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			textRenderer.render_text(lvl_2_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 			std::string lvl_2_instructions_0 = "Every order will be a valid order with:";
-			std::string lvl_2_instructions_1 = "    1 Entree - Chicken, Dumpling, Veggies";
-			std::string lvl_2_instructions_2 = "    0-2 Sides - Rice, Noodles";
+			std::string lvl_2_instructions_1 = "    1 Entree - Chicken, Veggies";
+			std::string lvl_2_instructions_2 = "    0-2 Sides - Rice, Dumplings, Noodles";
 			textRenderer.render_text(lvl_2_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_2_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_2_instructions_2, 150.0f, windowH - 350.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
-		} else {
+		} else if (game_stat.curr_lvl == 3) {
 			std::string lvl_3_text = "Level 3";
 			textRenderer.render_text(lvl_3_text, 150.0f, windowH - 150.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 
 			std::string lvl_3_instructions_0 = "Valid orders should have:";
-			std::string lvl_3_instructions_1 = "    1 Entree - Chicken, Dumpling, Veggies";
-			std::string lvl_3_instructions_2 = "    0-2 Sides - Rice, Noodles";
+			std::string lvl_3_instructions_1 = "    1 Entree - Chicken, Veggies";
+			std::string lvl_3_instructions_2 = "    0-2 Sides - Rice, Dumplings, Noodles";
 			std::string lvl_3_instructions_3 = "Invalid orders should recieve empty trays.";
 			textRenderer.render_text(lvl_3_instructions_0, 150.0f, windowH - 250.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_3_instructions_1, 150.0f, windowH - 300.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_3_instructions_2, 150.0f, windowH - 350.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
 			textRenderer.render_text(lvl_3_instructions_3, 150.0f, windowH - 400.0f, 0.25f, glm::vec3(0.0f, 0.0f, 0.0f));
+		} else {
+			std::string text = "Thank you for playing our game!";
+			textRenderer.render_text(text, 200.0f, windowH - 400.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
+			text = "Made by Leah Restad, Dakota Hernandez, Yifei Sun";
+			textRenderer.render_text(text, 100.0f, windowH - 450.0f, 0.5f, glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 		
 		return;

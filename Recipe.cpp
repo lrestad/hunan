@@ -43,6 +43,21 @@ void Recipe::TryAddEntree(std::string entree) {
 		entrees.push_back(entree);
 }
 
+std::string Recipe::to_image_name() {
+	std::sort(entrees.begin(), entrees.end());
+	std::sort(sides.begin(), sides.end());
+	std::string res = "";
+
+	for (auto &s : sides) {
+		res = res + s;
+	}
+	for (auto &s : entrees) {
+		res = res + s;
+	}
+
+	return res + "-recipe.png";
+}
+
 void RecipeQueueSystem::generate_order(unsigned int level, unsigned int total_time, unsigned int elapsed) {
 
 	// std::printf("generating order %lu \n", recipe_queue.size());
@@ -58,7 +73,7 @@ void RecipeQueueSystem::generate_order(unsigned int level, unsigned int total_ti
 	unsigned int side_idx;
 
 	// Do not let the queue get too long
-	if (recipe_queue.size() >= 5) {
+	if (recipe_queue.size() >= queue_max_size) {
 		return;
 	}
 

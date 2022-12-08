@@ -10,6 +10,7 @@
 #include "gl_errors.hpp"
 #include "data_path.hpp"
 #include "Sound.hpp"
+#include "Sprite.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -79,8 +80,12 @@ Load< Sound::Sample > crowd_sample_(LoadTagDefault, []() -> Sound::Sample const 
 	return new Sound::Sample(data_path("sounds/crowd-noise.wav"));
 });
 
-Load< Sound::Sample > music_sample_(LoadTagDefault, []() -> Sound::Sample const * {
+Load< Sound::Sample > hunan_rap_sample(LoadTagDefault, []() -> Sound::Sample const * {
 	return new Sound::Sample(data_path("sounds/hunan-rap.wav"));
+});
+
+Load< Sound::Sample > tutorial_rap_sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/tutorial-rap.wav"));
 });
 
 std::map< std::string, GLuint > ingredient_to_tex;
@@ -155,7 +160,7 @@ glm::quat safe_quat_lookat(glm::vec3 const &fromPos, glm::vec3 const &toPos,
 }
 
 // This is a prety bad way to do things but it works for now
-const glm::vec3 player_start_pos = glm::vec3(0, -8.9f, 3.5f);
+const glm::vec3 player_start_pos = glm::vec3(0, -11.0f, 3.5f);
 const glm::vec3 hat_start_pos = glm::vec3(0, 0, 3.5f);
 const glm::vec3 base_start_pos = glm::vec3(4.04f, -18.16f, 27.8f);
 const glm::vec3 entree_pos = glm::vec3(3.5f, -18.1f, 28.5f);
@@ -311,7 +316,7 @@ void PlayMode::try_submit_recipe(Recipe recipe) {
 	if (recipe_queue_system.recipe_queue.front()->is_match(&recipe)) {
 
 		recipe_queue_system.recipe_queue.pop_front();
-		game_stat.satisfac += 0.1f;
+		game_stat.satisfac += 0.3f;
 		game_stat.satisfac = std::min(game_stat.satisfac, 5.0f);
 		player.score++;
 		game_stat.num_helped++;
@@ -338,7 +343,7 @@ glm::vec3 PlayMode::ray_point_from_screen(int x, int y, GLfloat depth) {
 	glm::vec4 viewport = glm::vec4(0, 0, windowW, windowH);
 	glm::vec3 wincoord = glm::vec3(x, windowH - y - 1, depth);
 	glm::vec3 worldcoord = glm::unProject(wincoord, view, projection, viewport);
-	std::printf("Method 1: %f, %f, %f\n", worldcoord.x, worldcoord.y, worldcoord.z);
+	// std::printf("Method 1: %f, %f, %f\n", worldcoord.x, worldcoord.y, worldcoord.z);
 	// glm::vec4 viewport = glm::vec4(0.0f, 0.0f, windowW, windowH);
 	// glm::vec3 camerapos = camera->transform->position;
 	// glm::vec3 camera_angle = glm::eulerAngles(camera->transform->rotation);
@@ -395,8 +400,8 @@ Scene::ClickableLocation *PlayMode::trace_ray(glm::vec3 position, glm::vec3 ray)
 		Scene::Transform *clickable_trans = it.transform;
 		glm::vec3 trans_min = clickable_trans->make_local_to_world() * glm::vec4(it.min, 1.f);
 		glm::vec3 trans_max = clickable_trans->make_local_to_world() * glm::vec4(it.max, 1.f);
-		std::printf("transformed min: %f, %f, %f. transformed max: %f, %f, %f\n",
-			trans_min.x, trans_min.y, trans_min.z, trans_max.x, trans_max.y, trans_max.z);
+		// std::printf("transformed min: %f, %f, %f. transformed max: %f, %f, %f\n",
+			// trans_min.x, trans_min.y, trans_min.z, trans_max.x, trans_max.y, trans_max.z);
 		if(bbox_intersect(position, ray, trans_min, trans_max)) {
 			return &it;
 		}
@@ -406,9 +411,12 @@ Scene::ClickableLocation *PlayMode::trace_ray(glm::vec3 position, glm::vec3 ray)
 
 bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size) {
 	
-	if (end_game) {
-		return false;
-	}
+	// if (end_game) {
+	// 	return false;
+	// }
+	// if (game_stat.satisfac <= 0) {
+	// 	return false;
+	// }
 	windowW = window_size.x;
 	windowH = window_size.y;
 	if (evt.type == SDL_KEYDOWN) {
@@ -432,7 +440,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			r_button.pressed = false;
 			return true;
 		}
-	} else if (evt.type == SDL_MOUSEBUTTONDOWN) {
+	} else if (evt.type == SDL_MOUSEBUTTONDOWN && (game_stat.satisfac > 0 || !end_game)) {
 		if (!game_stat.playing) {
 			game_stat.playing = true;
 		} else {
@@ -454,26 +462,26 @@ void PlayMode::handle_click(SDL_Event evt) {
 	// For some reason (I think it's the rotation component) applying the
 	// make_local_to_world() matrix messes up the position.
 	// glm::vec4 camera_pos_homo = glm::vec4(camera->transform->position, 1.0f);
-	std::printf("camera->transform->scale: %f, %f, %f\n", camera->transform->scale.x, camera->transform->scale.y, camera->transform->scale.z);
+	// std::printf("camera->transform->scale: %f, %f, %f\n", camera->transform->scale.x, camera->transform->scale.y, camera->transform->scale.z);
 	// glm::vec3 camera_world_pos = camera->transform->make_local_to_world() * camera_pos_homo;
-	std::printf("camera local pos: %f, %f, %f\n", camera->transform->position.x, camera->transform->position.y, camera->transform->position.z);
+	// std::printf("camera local pos: %f, %f, %f\n", camera->transform->position.x, camera->transform->position.y, camera->transform->position.z);
 	// std::printf("camera_world_pos: %f, %f, %f\n", camera_world_pos.x, camera_world_pos.y, camera_world_pos.z);
-	std::printf("point: %f, %f, %f\n", ray_point.x, ray_point.y, ray_point.z);
+	// std::printf("point: %f, %f, %f\n", ray_point.x, ray_point.y, ray_point.z);
 	// glm::vec3 ray = glm::normalize(ray_point - camera_world_pos);
 	glm::vec3 ray = glm::normalize(ray_point - camera->transform->position);
-	std::printf("ray: %f, %f, %f\n", ray.x, ray.y, ray.z);
+	// std::printf("ray: %f, %f, %f\n", ray.x, ray.y, ray.z);
 	Scene::ClickableLocation *clickableLocation = trace_ray(camera->transform->position, ray);
 	if (clickableLocation != nullptr) {
 		on_click_location(clickableLocation, player.transform);
 	} else {
-		std::cout << "no clickable detected\n";
+		// std::cout << "no clickable detected\n";
 	}
 }
 
 void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Scene::Transform *to_move) {
 	if (clickableLocation == nullptr)
 		return;
-	std::printf("Clicked on %s\n", clickableLocation->transform->name.c_str());
+	// std::printf("Clicked on %s\n", clickableLocation->transform->name.c_str());
 	to_move->position.x = clickableLocation->transform->position.x;
 	to_move->position.y = clickableLocation->transform->position.y;
 	if (clickableLocation->update_z)
@@ -510,6 +518,31 @@ void PlayMode::on_click_location(Scene::ClickableLocation *clickableLocation, Sc
 }
 
 void PlayMode::update(float elapsed) {
+	
+	// Check if player is trying to exit or restart.
+	// Should happen even if game over has happened.
+	if (escape.pressed) {
+		game_stat.playing = false;
+		if (crowd_sample != nullptr) {
+			crowd_sample->stop();
+			music_sample->stop();
+		}
+		Mode::set_current(std::make_shared< MainMenuMode >());
+		return;
+	}
+	escape.downs = 0;
+	if (r_button.pressed) {
+		game_stat.playing = false;
+		if (crowd_sample != nullptr) {
+			crowd_sample->stop();
+			music_sample->stop();
+		}
+		auto new_level = std::make_shared< PlayMode>();
+		new_level->game_stat.curr_lvl = game_stat.curr_lvl;
+		Mode::set_current(new_level);
+		return;
+	}
+	r_button.downs = 0;
 
 	// If not currently playing, ignore time
 	//! TODO: make each instruction screen its own mode
@@ -524,10 +557,61 @@ void PlayMode::update(float elapsed) {
 	} else if (crowd_sample == nullptr) {
 		// Start looping sounds
 		crowd_sample = Sound::loop(*crowd_sample_, 0.05f);
-		music_sample = Sound::loop(*music_sample_, 0.75f);
+		if (game_stat.curr_lvl == 1) {
+			music_sample = Sound::loop(*tutorial_rap_sample, 0.75f);
+		} else {
+			music_sample = Sound::loop(*hunan_rap_sample, 0.75f);
+		}
 	}
 
+	// If satisfaction is too low, end game
+	//! TODO: make 'game over' its own mode
+	if (game_stat.satisfac <= 0) {
+		if (game_stat.curr_lvl < 3) {
+			// std::printf("game over, stars: %d", game_stat.curr_lvl);
+		} else {
+			// std::printf("game over, level: %d, time: %lu", 3, game_stat.curr_time_elapsed);
+		}
+		return;
+	}
 
+	// Update satisfaction
+	std::printf("elapsed: %lu\n", elapsed);
+	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
+		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.0001;
+	}
+
+	// If finished with level 1, move to level 2 and reset stats
+	if (game_stat.curr_lvl == 1 && game_stat.num_helped >= game_stat.helped_goal) {
+		game_stat.curr_lvl = 2;
+		game_stat.curr_time_elapsed = 0;
+		game_stat.num_helped = 0;
+		game_stat.playing = false;
+		game_stat.satisfac = 5.0f;
+		game_stat.helped_goal = 20;
+		recipe_queue_system.recipe_queue = std::deque<Recipe*>();
+
+	// If finished with level 2, move to level 3 and reset stats
+	} else if (game_stat.curr_lvl == 2 && game_stat.num_helped >= game_stat.helped_goal) {
+		game_stat.curr_lvl = 3;
+		game_stat.curr_time_elapsed = 0;
+		game_stat.num_helped = 0;
+		game_stat.playing = false;
+		game_stat.satisfac = 5.0f;
+		recipe_queue_system.recipe_queue = std::deque<Recipe*>();
+	}
+
+	// Update order queue
+	if (recipe_queue_system.recipe_queue.size() < recipe_queue_system.queue_max_size)
+		recipe_queue_system.add_recipe_timer += elapsed;
+	
+	if (recipe_queue_system.add_recipe_timer >= recipe_queue_system.add_recipe_delay) {
+		recipe_queue_system.generate_order((unsigned int)game_stat.curr_lvl, (unsigned int)game_stat.curr_time_elapsed, (unsigned int)elapsed);
+		recipe_queue_system.add_recipe_timer -= recipe_queue_system.add_recipe_delay;
+	}
+
+	// Update level total time
+	game_stat.curr_time_elapsed += elapsed;
 	// Check if player is trying to exit or restart.
 	if (escape.pressed) {
 		game_stat.playing = false;
@@ -549,49 +633,6 @@ void PlayMode::update(float elapsed) {
 		Mode::set_current(new_level);
 	}
 	r_button.downs = 0;
-
-	// If satisfaction is too low, end game
-	//! TODO: make 'game over' its own mode
-	if (game_stat.satisfac <= 0) {
-		if (game_stat.curr_lvl < 3) {
-			std::printf("game over, stars: %d", game_stat.curr_lvl);
-		} else {
-			std::printf("game over, level: %d, time: %lu", 3, game_stat.curr_time_elapsed);
-		}
-		return;
-	}
-
-	// Update satisfaction
-	std::printf("elapsed: %lu\n", elapsed);
-	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
-		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.0001;
-	}
-
-	// If finished with level 1, move to level 2 and reset stats
-	if (game_stat.curr_lvl == 1 && game_stat.num_helped >= 15) {
-		game_stat.curr_lvl = 2;
-		game_stat.curr_time_elapsed = 0;
-		game_stat.num_helped = 0;
-		game_stat.playing = false;
-		game_stat.satisfac = 5.0f;
-		//! TODO: clear order queue
-
-	// If finished with level 2, move to level 3 and reset stats
-	} else if (game_stat.curr_lvl == 2 && game_stat.num_helped >= 20) {
-		game_stat.curr_lvl = 3;
-		game_stat.curr_time_elapsed = 0;
-		game_stat.num_helped = 0;
-		game_stat.playing = false;
-		game_stat.satisfac = 5.0f;
-		//! TODO: clear order queue
-	}
-
-	// Update order queue
-	recipe_queue_system.generate_order((unsigned int)game_stat.curr_lvl, (unsigned int)game_stat.curr_time_elapsed, (unsigned int)elapsed);
-
-	// Update level total time
-	game_stat.curr_time_elapsed += elapsed;
-
 }
 
 std::string float_to_string(float f, size_t precision) {
@@ -685,22 +726,22 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			0.0f, 0.0f, 0.0f, 1.0f
 		));
 	}
-	// Print recipes
-	{
-		// recipes to complete
-		int cnt = 1;
-		for (Recipe* recipe : recipe_queue_system.recipe_queue) {
-			std::string display_text = "Recipe " + std::to_string(cnt++) + ": ";
+	// Print recipes (old: now draw icon)
+	// {
+	// 	// recipes to complete
+	// 	int cnt = 1;
+	// 	for (Recipe* recipe : recipe_queue_system.recipe_queue) {
+	// 		std::string display_text = "Recipe " + std::to_string(cnt++) + ": ";
 
-			for (std::string ingred : recipe->sides) {
-				display_text += ingred + ", ";
-			}
-			for (std::string ingred : recipe->entrees) {
-				display_text += ingred + ", ";
-			}
-			textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.25f, glm::vec3(0.0f));
-		}
-	}
+	// 		for (std::string ingred : recipe->sides) {
+	// 			display_text += ingred + ", ";
+	// 		}
+	// 		for (std::string ingred : recipe->entrees) {
+	// 			display_text += ingred + ", ";
+	// 		}
+	// 		textRenderer.render_text(display_text, (float)20, (float)windowH - cnt * 20.0f, 0.25f, glm::vec3(0.0f));
+	// 	}
+	// }
 
 	// Draw satisfacation
 	{
@@ -732,9 +773,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		case 1:
 			styrofoam_side_left->pipeline.textures[0].texture = *empty_tex;
 			side_tex_id = ingredient_to_tex[player.active_recipe.sides[0]];
-			std::cout << "side 0: " << player.active_recipe.sides[0] << " tex id: " << side_tex_id << "\n";
 			styrofoam_side_right->pipeline.textures[0].texture = side_tex_id;
-			std::cout << "side right texid: " << styrofoam_side_right->pipeline.textures[0].texture << "\n";
 			break;
 		case 2:
 			side_right_tex_id = ingredient_to_tex[player.active_recipe.sides[0]];
@@ -746,13 +785,26 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			std::cout << "Invalid active recipe sides size: " << player.active_recipe.sides.size() << "\n";
 		}
 	}
+	
+	// Draw recipe sprites
+	// if (recipe_queue_system.recipe_queue.size() > 0) {
+	float recipe_icon_scale = 0.75f;
+	GLuint offset = 330 * recipe_icon_scale;
+	for (auto it = recipe_queue_system.recipe_queue.begin(); it != recipe_queue_system.recipe_queue.end(); ++it) {
+		std::string img_name = (*it)->to_image_name();
+		Sprite tmp_sprite(data_path("ui/" + img_name));
+		tmp_sprite.set_drawable_size(drawable_size);
+		tmp_sprite.draw(glm::vec2(offset, drawable_size.y - (120 * recipe_icon_scale)), recipe_icon_scale);
+		offset += 630 * recipe_icon_scale;
+	}
+	
 	if (game_stat.satisfac <= 0) {
 		std::string end_text = "GAME OVER";
 		textRenderer.render_text(end_text, windowW / 2 - 240.0f, windowH /2 - .0f, 1.0f, glm::vec3(.8f, .2f, .2f));
 		end_text = "Press r to restart level.";
-		textRenderer.render_text(end_text, windowW / 2 - 200.0f, windowH / 2 - 40.0f, 0.5f, glm::vec3(.8f, .2f, .2f));
+		textRenderer.render_text(end_text, windowW / 2 - 200.0f, windowH / 2 - 120.0f, 0.5f, glm::vec3(.8f, .2f, .2f));
 		end_text = "Press esc to return to main menu.";
-		textRenderer.render_text(end_text, windowW / 2 - 300.0f, windowH / 2 - 80.0f, 0.5f, glm::vec3(.8f, .2f, .2f));
+		textRenderer.render_text(end_text, windowW / 2 - 300.0f, windowH / 2 - 200.0f, 0.5f, glm::vec3(.8f, .2f, .2f));
 		return;
 	}
 	GL_ERRORS();

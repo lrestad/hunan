@@ -409,9 +409,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 	if (end_game) {
 		return false;
 	}
-	if (game_stat.satisfac <= 0) {
-		return false;
-	}
 	windowW = window_size.x;
 	windowH = window_size.y;
 	if (evt.type == SDL_KEYDOWN) {
@@ -530,6 +527,29 @@ void PlayMode::update(float elapsed) {
 		music_sample = Sound::loop(*music_sample_, 0.75f);
 	}
 
+
+	// Check if player is trying to exit or restart.
+	if (escape.pressed) {
+		game_stat.playing = false;
+		if (crowd_sample != nullptr) {
+			crowd_sample->stop();
+			music_sample->stop();
+		}
+		Mode::set_current(std::make_shared< MainMenuMode >());
+	}
+	escape.downs = 0;
+	if (r_button.pressed) {
+		game_stat.playing = false;
+		if (crowd_sample != nullptr) {
+			crowd_sample->stop();
+			music_sample->stop();
+		}
+		auto new_level = std::make_shared< PlayMode>();
+		new_level->game_stat.curr_lvl = game_stat.curr_lvl;
+		Mode::set_current(new_level);
+	}
+	r_button.downs = 0;
+
 	// If satisfaction is too low, end game
 	//! TODO: make 'game over' its own mode
 	if (game_stat.satisfac <= 0) {
@@ -542,8 +562,9 @@ void PlayMode::update(float elapsed) {
 	}
 
 	// Update satisfaction
+	std::printf("elapsed: %lu\n", elapsed);
 	if (game_stat.curr_time_elapsed / 5000 < (game_stat.curr_time_elapsed + elapsed) / 5000) {
-		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.0005;
+		game_stat.satisfac -= recipe_queue_system.recipe_queue.size() * 0.0001;
 	}
 
 	// If finished with level 1, move to level 2 and reset stats
@@ -570,28 +591,7 @@ void PlayMode::update(float elapsed) {
 
 	// Update level total time
 	game_stat.curr_time_elapsed += elapsed;
-	
-	// Check if player is trying to exit or restart.
-	if (escape.pressed) {
-		game_stat.playing = false;
-		if (crowd_sample != nullptr) {
-			crowd_sample->stop();
-			music_sample->stop();
-		}
-		Mode::set_current(std::make_shared< MainMenuMode >());
-	}
-	escape.downs = 0;
-	if (r_button.pressed) {
-		game_stat.playing = false;
-		if (crowd_sample != nullptr) {
-			crowd_sample->stop();
-			music_sample->stop();
-		}
-		auto new_level = std::make_shared< PlayMode>();
-		new_level->game_stat.curr_lvl = game_stat.curr_lvl;
-		Mode::set_current(new_level);
-	}
-	r_button.downs = 0;
+
 }
 
 std::string float_to_string(float f, size_t precision) {

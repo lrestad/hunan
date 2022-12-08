@@ -440,7 +440,7 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			r_button.pressed = false;
 			return true;
 		}
-	} else if (evt.type == SDL_MOUSEBUTTONDOWN && (game_stat.satisfac > 0 || !end_game)) {
+	} else if (evt.type == SDL_MOUSEBUTTONDOWN && (game_stat.satisfac > 0)) {
 		if (!game_stat.playing) {
 			game_stat.playing = true;
 		} else {
